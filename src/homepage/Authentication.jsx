@@ -39,20 +39,30 @@ function AuthenticationPanel({ setUserInformation, setRole, setView }) {
         { name: 'Low', password: 'Low', role: 'passenger' },
     ]
 
-    const [username, setUsername] = useState(null)
-    const [password, setPassword] = useState(null)
+    const [username, setUsername] = useState("")
+    const [password, setPassword] = useState("")
 
     // Temporary error message to display
     const [errorMessage, setErrorMessage] = useState("")
     const [errorMessageState, setErrorMessageState] = useState(false)
 
     useEffect(() => {
-        setTimeout(() => { setErrorMessageState(false); setErrorMessage(""); }, 5000)
+        
+        const errorMessage = setTimeout(() => { setErrorMessageState(false); setErrorMessage(""); }, 3000)
+        
+        return () => {
+            clearTimeout(errorMessage);
+        }
 
     }, [errorMessageState])
 
     function login() {
-        // function body for login
+        if(username === "" || password === "") {
+            setErrorMessage("Missing username or password");
+            setErrorMessageState(true);
+            return;
+        }
+
         const user = users.find(u => u.name === username && u.password === password);
 
         if(user) {
@@ -74,7 +84,7 @@ function AuthenticationPanel({ setUserInformation, setRole, setView }) {
 
     return (
         <>
-            <div className={`absolute top-8 right-8 h-24 w-96 transition-all ease-in-out ${errorMessageState ? 'duration-300 translate-x-0 opacity-100' : 'duration-300 translate-x-full opacity-0'}`}>
+            <div className={`absolute top-8 right-8 h-24 w-96 transition-all ease-in-out shadow-2xs ${errorMessageState ? 'duration-300 translate-x-0 opacity-100' : 'duration-300 translate-x-full opacity-0'}`}>
                 <ErrorMessage error={errorMessage} />
             </div>
 
@@ -166,7 +176,7 @@ function ChangePasswordPanel({ setView }) {
 function ErrorMessage({ error }) {
 
     return (
-        <div className="w-full h-full bg-orange-50 shadow-2xl rounded-3xl flex justify-center items-center">
+        <div className="w-full h-full bg-orange-50 border-2 border-orange-950 shadow-2xl rounded-3xl flex justify-center items-center">
             <p className="text-2xl text-black">{error}</p>
         </div>
     )

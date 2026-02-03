@@ -1,5 +1,7 @@
 import { useState } from "react"
 
+import ComponentFooter from "../../ReusableComponents/ComponentFooter"
+
 export default function MessageBoard() {
 
     const [messages, setMessages] = useState([
@@ -8,6 +10,9 @@ export default function MessageBoard() {
 
     return (
         <div className="w-full h-full bg-orange-50 flex justify-center items-center">
+
+            <ComponentFooter title={'Message Board'} />
+
             {
                 messages.length < 1 ? (
                     <div className="w-full h-full flex justify-center items-center">
