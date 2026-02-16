@@ -2,40 +2,17 @@ import { useState } from "react"
 
 import RemovalPopup from "../../ReusableComponents/Reusable"
 import ComponentFooter from "../../ReusableComponents/ComponentFooter";
+import { useData } from "../../GlobalData/ApplicationData";
 
 export default function ViewStaff() {
+
+    const { staff, setStaff } = useData()
+
+    const staffToDisplay = staff.filter(s => s.type !== 'admin');
 
     // ***Backend Route (Fetch Flights) 
     const [deletionPopup, setDeletionPopup] = useState(false);
     const [staffToDelete, setStaffToDelete] = useState("");
-    const [staff, setStaff] = useState([
-        {
-            staffType: 'Airline',
-            firstName: 'Moe',
-            lastName: 'Jackson',
-            emailAddress: 'moe@aa.com',
-            phoneNumber: '2146631029',
-            username: 'AQ1034',
-            airline: 'AA',
-        },
-        {
-            staffType: 'Gate',
-            firstName: 'Row',
-            lastName: 'Row',
-            emailAddress: 'row@dl.com',
-            phoneNumber: '2142201831',
-            username: 'BL0034',
-            airline: 'DL',
-        },
-        {
-            staffType: 'Ground',
-            firstName: 'Bow',
-            lastName: 'Bow',
-            emailAddress: 'bow@groundstaff.com',
-            phoneNumber: '2140192231',
-            username: 'ZZ1004',
-        },
-    ])
 
     const removeStaff = (username) => {
         setStaff(prev => prev.filter(staff => staff.username !== username))
@@ -72,23 +49,23 @@ export default function ViewStaff() {
 
 
                     <div className="w-9/12 max-h-[60vh] overflow-y-auto">
-                        <table className="w-full border-collapse text-emerald-950">
+                        <table className="w-full table-fixed border-collapse text-emerald-950">
                             <thead>
                                 <tr>
-                                    <th>Staff Type</th>
-                                    <th>First Name</th>
-                                    <th>Last Name</th>
-                                    <th>Email</th>
-                                    <th>Phone</th>
-                                    <th>Username</th>
-                                    <th>Airline</th>
-                                    <th>Remove</th>
+                                    <th className="p-4">Staff Type</th>
+                                    <th className="p-4">First Name</th>
+                                    <th className="p-4">Last Name</th>
+                                    <th className="p-4">Email</th>
+                                    <th className="p-4">Phone</th>
+                                    <th className="p-4">Username</th>
+                                    <th className="p-4">Airline</th>
+                                    <th className="p-4">Remove</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {staff.map((staff) => (
+                                {staffToDisplay.map((staff) => (
                                     <tr key={staff.username} className="text-center border-b">
-                                        <td className="p-4">{staff.staffType}</td>
+                                        <td className="p-4">{staff.type}</td>
                                         <td className="p-4">{staff.firstName}</td>
                                         <td className="p-4">{staff.lastName}</td>
                                         <td className="p-4">{staff.emailAddress}</td>

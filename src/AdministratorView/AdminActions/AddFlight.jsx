@@ -1,42 +1,136 @@
 import { useState, useEffect } from "react"
 
 import ComponentFooter from "../../ReusableComponents/ComponentFooter"
+import Alert from "../../ReusableComponents/Alert"
+import { useData } from "../../GlobalData/ApplicationData"
+
+import { airlineCodeRegex, flightNumberRegex, terminalRegex, gateNumberRegex, alphaRegex } from "../../RegexValidation/form-validation"
 
 export default function AddFlight() {
 
     // ***Backend Route (Add Flight) 
+    const { flights, setFlights } = useData()
 
     const [airlineCode, setAirlineCode] = useState("")
     const [flightNumber, setFlightNumber] = useState("")
     const [terminal, setTerminal] = useState("")
     const [gateNumber, setGateNumber] = useState("")
+    const [airlineName, setAirlineName] = useState("")
+    const [destination, setDestination] = useState("")
 
     const [validForm, setValidForm] = useState(false)
 
+    const [validAirlineCode, setValidAirlineCode] = useState(false)
+    const [validFlightNumber, setValidFlightNumber] = useState(false)
+    const [validTerminal, setValidTerminal] = useState(false)
+    const [validGateNumber, setValidGateNumber] = useState(false)
+    const [validAirlineName, setValidAirlineName] = useState(false)
+    const [validDestination, setValidDestination] = useState(false)
+
+    // Temporary error message to display
+    const [errorMessage, setErrorMessage] = useState("")
+    const [errorMessageState, setErrorMessageState] = useState(false)
+
+    useEffect(() => {
+
+        const errorMessageState = setTimeout(() => { setErrorMessageState(false); }, 3000)
+        const errorMessage = setTimeout(() => { setErrorMessage(""); }, 3500)
+
+        return () => {
+            clearTimeout(errorMessageState); clearTimeout(errorMessage)
+        }
+
+    }, [errorMessageState])
+
     // Lacking Regex Check
     useEffect(() => {
-        if (!airlineCode || !flightNumber || !terminal || !gateNumber) {
+        if (airlineCodeRegex(airlineCode)) {
+            setValidAirlineCode(true)
+        } else {
+            setValidAirlineCode(false)
+        }
+
+        if (flightNumberRegex(flightNumber)) {
+            setValidFlightNumber(true)
+        } else {
+            setValidFlightNumber(false)
+        }
+
+        if (terminalRegex(terminal)) {
+            setValidTerminal(true)
+        } else {
+            setValidTerminal(false)
+        }
+
+        if (gateNumberRegex(gateNumber)) {
+            setValidGateNumber(true)
+        } else {
+            setValidGateNumber(false)
+        }
+
+        if (alphaRegex(airlineName)) {
+            setValidAirlineName(true)
+        } else {
+            setValidAirlineName(false)
+        }
+        
+        if (alphaRegex(destination)) {
+            setValidDestination(true)
+        } else {
+            setValidDestination(false)
+        }
+
+        if (!airlineCode || !flightNumber || !terminal || !gateNumber || !airlineName || !destination ||
+            !airlineCodeRegex(airlineCode) || !flightNumberRegex(flightNumber) || !terminalRegex(terminal) || 
+            !gateNumberRegex(gateNumber) || !alphaRegex(airlineName) || !alphaRegex(destination)
+        ) {
             setValidForm(false);
         } else {
             setValidForm(true);
         }
-    }, [airlineCode, flightNumber, terminal, gateNumber])
+    }, [airlineCode, flightNumber, terminal, gateNumber, airlineName, destination])
 
-    function airlineCodeValidation() {
-        // Code to handle removing invalid format for airlineCode
-    }
+    function flightNumberValidation(flightNumber) {
 
-    function flightNumberValidation() {
-        // Code to handle removing invalid format for flightNumber
+        if (flightNumber.length < 4) {
+            const toAdd = 4 - flightNumber.length
+            return "0".repeat(toAdd) + flightNumber
+        } else {
+            return flightNumber
+        }
     }
 
     function addFlight(e) {
         e.preventDefault()
 
+        const existingFlight = flights.some(f => f.flightId === `${airlineCode}${flightNumber}`)
+        const occupiedFlightBay = flights.some(f => f.gateInformation.terminal === terminal && f.gateInformation.gateNumber === gateNumber)
+
+        let _flightNumber = flightNumberValidation(flightNumber)
+
+        if (existingFlight) {
+            setErrorMessage(`Flight ${airlineCode}${_flightNumber} already exists!`)
+            setErrorMessageState(true)
+            return;
+        }
+
+        else if (occupiedFlightBay) {
+            setErrorMessage(`Flight bay ${terminal}${gateNumber} is occupied!`)
+            setErrorMessageState(true)
+            return;
+        } 
+        
+        else {
+            setErrorMessage(`Flight ${airlineCode}${_flightNumber} to ${destination} added!`)
+            setErrorMessageState(true)
+        }
+
         const flightToAdd = {
-            flightId: `${airlineCode}${flightNumber}`,
+            flightId: `${airlineCode}${_flightNumber}`,
             airlineCode: airlineCode,
-            flightNumber: flightNumber,
+            flightNumber: _flightNumber,
+            airlineName: airlineName,
+            destination: destination,
             gateInformation: {
                 terminal,
                 gateNumber
@@ -44,33 +138,41 @@ export default function AddFlight() {
             ticketNumbers: []
         }
 
-        console.log("Flight added successfully");
+        setFlights(flights => [...flights, flightToAdd])
+
+        console.log("Flight added successfully", flightToAdd);
 
         setAirlineCode("");
         setFlightNumber("");
         setTerminal("");
         setGateNumber("");
+        setAirlineName("");
+        setDestination("")
 
     }
 
     return (
         <div className="w-full h-full bg-orange-50 flex justify-center items-center">
-            {/* <div className={`absolute top-8 right-8 h-24 w-96 transition-all ease-in-out ${errorMessageState ? 'duration-300 translate-x-0 opacity-100' : 'duration-300 translate-x-full opacity-0'}`}>
-                <ErrorMessage error={errorMessage} />
-            </div> */}
+
+            <div className={`absolute top-36 right-8 h-24 w-96 transition-all ease-in-out ${errorMessageState ? 'duration-300 translate-x-0 opacity-100' : 'duration-300 translate-x-full opacity-0'}`}>
+                <Alert error={errorMessage} />
+            </div>
 
             <ComponentFooter title={'Add Flight Form'} />
 
             <form onSubmit={addFlight} className="p-16 relative w-4/12 min-h-2/12 bg-emerald-800 outline-2 outline-emerald-950 rounded-3xl flex flex-col justify-center items-center gap-8">
 
 
-                <button type="submit" className={`hover:scale-105 absolute bottom-0 -right-[120px] rounded-full bg-emerald-800 border-2 border-emerald-950 size-32 gap-y-4 text-white transition-all duration-500 flex flex-col justify-center items-center
+                <button type="submit" className={`cursor-pointer hover:scale-105 absolute bottom-0 -right-[120px] rounded-full bg-emerald-800 border-2 border-emerald-950 size-32 gap-y-4 text-white transition-all duration-500 flex flex-col justify-center items-center
                                     ${validForm ? '' : 'ease-in opacity-0'}`}>
                     <svg className="fill-white" xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="#000000" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm48-88a8,8,0,0,1-8,8H136v32a8,8,0,0,1-16,0V136H88a8,8,0,0,1,0-16h32V88a8,8,0,0,1,16,0v32h32A8,8,0,0,1,176,128Z"></path></svg>
                 </button>
 
                 <div className="w-11/12 flex flex-col gap-y-4">
-                    <label className="text-2xl text-white">Airline Code</label>
+                    <div className="w-full flex flex-row justify-between">
+                        <label className="text-2xl text-white">Airline Code</label>
+                        {validAirlineCode && <svg className="fill-white" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 256 256"><path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"></path></svg>}
+                    </div>
                     <input
                         onChange={(e) => setAirlineCode(e.target.value)}
                         maxLength={2}
@@ -80,7 +182,10 @@ export default function AddFlight() {
                 </div>
 
                 <div className="w-11/12 flex flex-col gap-y-4">
-                    <label className="text-2xl text-white">Flight Number</label>
+                    <div className="w-full flex flex-row justify-between">
+                        <label className="text-2xl text-white">Flight Number</label>
+                        {validFlightNumber && <svg className="fill-white" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 256 256"><path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"></path></svg>}
+                    </div>
                     <input
                         onChange={(e) => setFlightNumber(e.target.value)}
                         maxLength={4}
@@ -90,30 +195,57 @@ export default function AddFlight() {
                 </div>
 
                 <div className="w-11/12 flex flex-col gap-y-4">
-                    <label className="text-2xl text-white">Terminal</label>
+                    <div className="w-full flex flex-row justify-between">
+                        <label className="text-2xl text-white">Terminal</label>
+                        {validTerminal && <svg className="fill-white" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 256 256"><path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"></path></svg>}
+                    </div>
                     <input
                         onChange={(e) => setTerminal(e.target.value)}
                         className="w-full h-16 border-2 border-emerald-950 bg-zinc-50 rounded-xl text-2xl px-4"
                         type="text"
+                        maxLength={1}
                         value={terminal} />
                 </div>
 
                 <div className="z-10 w-11/12 flex flex-col gap-y-4">
-                    <label className="text-2xl text-white">Gate</label>
+                    <div className="w-full flex flex-row justify-between">
+                        <label className="text-2xl text-white">Gate Number</label>
+                        {validGateNumber && <svg className="fill-white" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 256 256"><path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"></path></svg>}
+                    </div>
                     <input
                         onChange={(e) => setGateNumber(e.target.value)}
                         className="w-full h-16 border-2 border-emerald-950 bg-zinc-50 rounded-xl text-2xl px-4"
                         type="text"
+                        maxLength={2}
                         value={gateNumber} />
+                </div>
+                
+                <div className="z-10 w-11/12 flex flex-col gap-y-4">
+                    <div className="w-full flex flex-row justify-between">
+                        <label className="text-2xl text-white">Airline Name</label>
+                        {validAirlineName && <svg className="fill-white" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 256 256"><path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"></path></svg>}
+                    </div>
+                    <input
+                        onChange={(e) => setAirlineName(e.target.value)}
+                        className="w-full h-16 border-2 border-emerald-950 bg-zinc-50 rounded-xl text-2xl px-4"
+                        type="text"
+                        minLength={2}
+                        value={airlineName} />
+                </div>
+                
+                <div className="z-10 w-11/12 flex flex-col gap-y-4">
+                    <div className="w-full flex flex-row justify-between">
+                        <label className="text-2xl text-white">Destination</label>
+                        {validDestination && <svg className="fill-white" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 256 256"><path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"></path></svg>}
+                    </div>
+                    <input
+                        onChange={(e) => setDestination(e.target.value)}
+                        className="w-full h-16 border-2 border-emerald-950 bg-zinc-50 rounded-xl text-2xl px-4"
+                        type="text"
+                        minLength={2}
+                        value={destination} />
                 </div>
             </form>
         </div>
-    )
-}
-
-// Use to pass alerts similar to error messages
-function Alert({ alertMessage }) {
-    return (
-        <></>
     )
 }

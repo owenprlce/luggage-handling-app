@@ -1,79 +1,208 @@
+import emailjs from "emailjs-com";
+
 import { useState, useEffect } from "react"
 
 import ComponentFooter from "../../ReusableComponents/ComponentFooter"
+import Alert from "../../ReusableComponents/Alert"
+import { useData } from "../../GlobalData/ApplicationData"
+
+import { nameRegex, emailRegex, phoneNumberRegex } from "../../RegexValidation/form-validation"
 
 export default function AddStaff() {
-    const [staffType, setStaffType] = useState("Ground")
+    const [type, setType] = useState("ground-staff")
     const [firstName, setFirstName] = useState("")
     const [lastName, setLastName] = useState("")
     const [email, setEmail] = useState("")
     const [phoneNumber, setPhoneNumber] = useState("")
-    const [airlines, setAirlines] = useState("")
+    const [airline, setAirline] = useState("")
+
 
     const [validForm, setValidForm] = useState(false);
+    const [validFirst, setValidFirst] = useState(false);
+    const [validLast, setValidLast] = useState(false);
+    const [validEmail, setValidEmail] = useState(false);
+    const [validPhoneNumber, setValidPhoneNumber] = useState(false);
 
-    // Lacking Regex Check
+    const { staff, setStaff } = useData()
+
+    // Temporary error message to display
+    const [errorMessage, setErrorMessage] = useState("")
+    const [errorMessageState, setErrorMessageState] = useState(false)
+
     useEffect(() => {
-        if (staffType === "Airline" || staffType === "Gate") {
-            if (!firstName || !lastName || !email || !phoneNumber || !airlines) {
-                setValidForm(false);
-            } else {
-                setValidForm(true);
-            }
+
+        const errorMessageState = setTimeout(() => { setErrorMessageState(false); }, 3000)
+        const errorMessage = setTimeout(() => { setErrorMessage(""); }, 3500)
+
+        return () => {
+            clearTimeout(errorMessageState); clearTimeout(errorMessage)
+        }
+
+    }, [errorMessageState])
+
+    useEffect(() => {
+        if (type === "airline-staff" || type === "gate-staff") {
+
+            if (nameRegex(firstName)) { setValidFirst(true) } else { setValidFirst(false) }
+            if (nameRegex(lastName)) { setValidLast(true) } else { setValidLast(false) }
+            if (emailRegex(email)) { setValidEmail(true) } else { setValidEmail(false) }
+            if (phoneNumberRegex(phoneNumber)) { setValidPhoneNumber(true) } else { setValidPhoneNumber(false) }
+
+            if (!firstName || !lastName || !email || !phoneNumber || !airline) { setValidForm(false) } else { setValidForm(true) }
+            
         } else {
-            if (!firstName || !lastName || !email || !phoneNumber) {
-                setValidForm(false);
+
+            if (nameRegex(firstName)) { setValidFirst(true) } else { setValidFirst(false) }
+            if (nameRegex(lastName)) { setValidLast(true) } else { setValidLast(false) }
+            if (emailRegex(email)) { setValidEmail(true) } else { setValidEmail(false) }
+            if (phoneNumberRegex(phoneNumber)) { setValidPhoneNumber(true) } else { setValidPhoneNumber(false) }
+
+            if (!firstName || !lastName || !email || !phoneNumber || !airline) { setValidForm(false) } else { setValidForm(true) }
+
+            if (!firstName || !lastName || !email || !phoneNumber ||
+                !nameRegex(firstName) || !nameRegex(lastName) || !emailRegex(email) || !phoneNumberRegex(phoneNumber)) {
+                setValidForm(false)
             } else {
-                setValidForm(true);
+                setValidForm(true)
             }
         }
-    }, [firstName, lastName, email, phoneNumber, airlines, staffType])
+    }, [firstName, lastName, email, phoneNumber, airline, type])
 
     const addStaff = (e) => {
         e.preventDefault()
 
-        const newStaff = {
-            staffType: staffType,
-            firstName: firstName,
-            lastName: lastName,
-            email: email,
-            phoneNumber: phoneNumber,
-            username: generateUsername(),
-            password: generatePassword(),
+        // We will not worry about existing email for sake of demo purposes (To recieve emails of user credentials)
+
+        // const existingEmail = staff.some(s => s.email === email);
+        const existingPhoneNumber = staff.some(s => s.phoneNumber === phoneNumber);
+
+        // if (existingEmail) {
+        //     setErrorMessage(`Staff (Email: ${email}): already exists!`)
+        //     setErrorMessageState(true)
+        //     return;
+        // }
+
+        if (existingPhoneNumber) {
+            setErrorMessage(`Staff (Phone: ${phoneNumber}): already exists!`)
+            setErrorMessageState(true)
+            return;
         }
 
-        if (staffType !== "Ground") {
-            newStaff.airlines = airlines;
+        let generatedUsername = null
+        let checkUsername = false
+
+        const generatedPassword = generatePassword()
+
+        do {
+
+            generatedUsername = generateUsername()
+            checkUsername = staff.some(s => s.username === generatedUsername)
+
+        } while (checkUsername)
+
+        const newStaff = {
+            type: type,
+            firstName: firstName,
+            lastName: lastName,
+            emailAddress: email,
+            phoneNumber: phoneNumber,
+            username: generatedUsername,
+            password: generatedPassword,
+            changedPassword: false
+        }
+
+        if (type !== "ground-staff") {
+            newStaff.airline = airline;
         }
 
         console.log("Created new staff", newStaff)
+
+        setStaff(prev => [...prev, newStaff])
+
+        sendCredentialsToEmail(firstName, lastName, email, generatedUsername, generatedPassword)
+            .then(() => {
+                console.log("SENT!");
+            })
+            .catch((error) => {
+                console.error("COULD NOT SEND", error);
+            }) 
 
         setFirstName("")
         setLastName("")
         setEmail("")
         setPhoneNumber("")
-        setAirlines("")
-        setStaffType("Ground")
+        setAirline("")
+        setType("ground-staff")
+    }
+
+    // Since our applicaiton has not been deployed, I am not able to use process.env to acces the credentials, so it will be hardcoded on my end for now
+    // I can send you my credentials if you want to test on your end, if not, I console.log each created staff and it contains the generated credentials
+    const sendCredentialsToEmail = (firstName, lastName, email, username, password) => {
+        return emailjs.send(
+            // Service ID
+            // Template ID
+            {
+                email: email,
+                first: firstName,
+                last: lastName,
+                username: username,
+                password: password,
+            },
+            // Public Key
+        )
+    }
+
+    function randIdx(array) {
+        return array[Math.floor(Math.random() * array.length)]
     }
 
     function generateUsername() {
-        // Missing Logic 
 
-        return null;
+        const alphabet = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"];
+        const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0];
+
+        let generatedUsername = []
+
+        generatedUsername.push(randIdx(alphabet));
+        generatedUsername.push(randIdx(alphabet));
+        generatedUsername.push(randIdx(alphabet));
+
+        generatedUsername.push(randIdx(numbers));
+        generatedUsername.push(randIdx(numbers));
+        generatedUsername.push(randIdx(numbers));
+
+
+        return generatedUsername.sort(() => Math.random() - 0.5).join("")
     }
 
     function generatePassword() {
-        // Missing Logic
+        const uppercaseAlpha = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"];
+        const lowercaseAlpha = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"];
+        const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0];
 
-        return null;
+        const allCharacters = [...uppercaseAlpha, ...lowercaseAlpha, ...numbers]
+
+
+        let generatedPassword = []
+
+        generatedPassword.push(randIdx(uppercaseAlpha))
+        generatedPassword.push(randIdx(lowercaseAlpha))
+        generatedPassword.push(randIdx(numbers))
+
+        while (generatedPassword.length < 6) {
+            generatedPassword.push(randIdx(allCharacters));
+
+        }
+
+        return generatedPassword.sort(() => Math.random() - 0.5).join("")
     }
 
     return (
         <div className="w-full h-full bg-orange-50 flex justify-center items-center">
 
-            {/* <div className={`absolute top-8 right-8 h-24 w-96 transition-all ease-in-out ${errorMessageState ? 'duration-300 translate-x-0 opacity-100' : 'duration-300 translate-x-full opacity-0'}`}>
-                <ErrorMessage error={errorMessage} />
-            </div> */}
+            <div className={`absolute top-36 right-8 h-24 w-96 transition-all ease-in-out ${errorMessageState ? 'duration-300 translate-x-0 opacity-100' : 'duration-300 translate-x-full opacity-0'}`}>
+                <Alert error={errorMessage} />
+            </div>
 
             <ComponentFooter title={'Add Staff Form'} />
 
@@ -87,21 +216,31 @@ export default function AddStaff() {
                 </button>
 
                 <div className="w-11/12 flex flex-col gap-y-4">
-                    <label className="text-2xl text-white">First Name</label>
+                    <div className="w-full flex flex-row justify-between">
+                        <label className="text-2xl text-white">First Name</label>
+                        {validFirst && <svg className="fill-white" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 256 256"><path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"></path></svg>}
+                    </div>
                     <input
                         onChange={(e) => setFirstName(e.target.value)}
                         className="w-full h-16 border-2 border-emerald-950 bg-zinc-50 rounded-xl text-2xl px-4"
                         type="text"
+                        minLength={2}
+                        maxLength={12}
                         value={firstName}
                     />
                 </div>
 
                 <div className="w-11/12 flex flex-col gap-y-4">
-                    <label className="text-2xl text-white">Last Name</label>
+                    <div className="w-full flex flex-row justify-between">
+                        <label className="text-2xl text-white">Last Name</label>
+                        {validLast && <svg className="fill-white" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 256 256"><path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"></path></svg>}
+                    </div>
                     <input
                         onChange={(e) => setLastName(e.target.value)}
                         className="w-full h-16 border-2 border-emerald-950 bg-zinc-50 rounded-xl text-2xl px-4"
                         type="text"
+                        minLength={2}
+                        maxLength={12}
                         value={lastName}
                     />
                 </div>
@@ -109,7 +248,10 @@ export default function AddStaff() {
 
 
                 <div className="w-11/12 flex flex-col gap-y-4">
-                    <label className="text-2xl text-white">Email</label>
+                    <div className="w-full flex flex-row justify-between">
+                        <label className="text-2xl text-white">Email</label>
+                        {validEmail && <svg className="fill-white" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 256 256"><path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"></path></svg>}
+                    </div>
                     <input
                         onChange={(e) => setEmail(e.target.value)}
                         className="w-full h-16 border-2 border-emerald-950 bg-zinc-50 rounded-xl text-2xl px-4"
@@ -119,11 +261,15 @@ export default function AddStaff() {
                 </div>
 
                 <div className="w-11/12 flex flex-col gap-y-4">
-                    <label className="text-2xl text-white">Phone Number</label>
+                    <div className="w-full flex flex-row justify-between">
+                        <label className="text-2xl text-white">Phone Number</label>
+                        {validPhoneNumber && <svg className="fill-white" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 256 256"><path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"></path></svg>}
+                    </div>
                     <input
                         onChange={(e) => setPhoneNumber(e.target.value)}
                         className="w-full h-16 border-2 border-emerald-950 bg-zinc-50 rounded-xl text-2xl px-4"
                         type="text"
+                        maxLength={10}
                         value={phoneNumber}
                     />
                 </div>
@@ -133,26 +279,26 @@ export default function AddStaff() {
                     <div className="w-full flex flex-col gap-y-4">
                         <label className="text-2xl text-white">Staff Type</label>
                         <select
-                            onChange={(e) => setStaffType(e.target.value)}
+                            onChange={(e) => setType(e.target.value)}
                             className="w-full h-16 border-2 border-emerald-950 text-emerald-950 bg-zinc-50 rounded-xl text-2xl px-4"
-                            value={staffType}
+                            value={type}
                         >
-                            <option value="Ground">Ground</option>
-                            <option value="Airline">Airline</option>
-                            <option value="Gate">Gate</option>
+                            <option value="ground-staff">Ground</option>
+                            <option value="airline-staff">Airline</option>
+                            <option value="gate-staff">Gate</option>
                         </select>
                     </div>
 
                     {/* Renders Conditionally */}
-                    {(staffType === "Airline" || staffType === "Gate") && (
+                    {(type === "airline-staff" || type === "gate-staff") && (
                         <div className="w-full flex flex-col gap-y-4">
                             <label className="text-2xl text-white">Airlines Code</label>
                             <input
-                                onChange={(e) => setAirlines(e.target.value.toUpperCase())}
+                                onChange={(e) => setAirline(e.target.value.toUpperCase())}
                                 maxLength={2}
                                 className="w-full h-16 border-2 border-emerald-950 bg-zinc-50 rounded-xl text-2xl px-4"
                                 type="text"
-                                value={airlines}
+                                value={airline}
                             />
                         </div>
                     )}

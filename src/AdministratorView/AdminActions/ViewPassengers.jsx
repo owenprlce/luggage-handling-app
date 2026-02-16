@@ -1,43 +1,27 @@
 import { useState } from "react"
 
+import { useData } from "../../GlobalData/ApplicationData";
 import RemovalPopup from "../../ReusableComponents/Reusable"
 import ComponentFooter from "../../ReusableComponents/ComponentFooter";
 
 export default function ViewPassengers() {
 
+    const { passengers, setPassengers, bags, setBags } = useData()
+
     // ***Backend Route (Fetch Flights) 
     const [deletionPopup, setDeletionPopup] = useState(false);
     const [passengerToDelete, setPassengerToDelete] = useState("");
-    const [passengers, setPassengers] = useState([
-        {
-            firstName: 'Patrick',
-            lastName: 'Mahomes',
-            identification: '000001',
-            ticketNumber: '1234567890',
-            flight: 'AA1000',
-            status: 'Not-Checked-In'
-        },
-        {
-            firstName: 'Joe',
-            lastName: 'Johnson',
-            identification: '000002',
-            ticketNumber: '2345678901',
-            flight: 'AA1001',
-            status: 'Checked-In'
-        },
-        {
-            firstName: 'Owen',
-            lastName: 'Price',
-            identification: '000003',
-            ticketNumber: '3456789012',
-            flight: 'AA1002',
-            status: 'Not-Checked-In'
-        },
 
-    ])
-
+    // Not necesarry to remove all passenger bags of passenger being deleted, since Airline Staff removes all bags upon security violation report
+    // Doesn't hurt to keep this here
     const removePassenger = (id) => {
+        const passengerBeingRemoved = passengers.find(p => p.identification === id)
+
         setPassengers(prev => prev.filter(passenger => passenger.identification !== id))
+
+        if(passengerBeingRemoved) {
+            setBags(bag => bag.filter(b => b.ticketNumber !== passengerBeingRemoved.ticketNumber))
+        }
     }
 
     return (
@@ -50,7 +34,7 @@ export default function ViewPassengers() {
             ) : (
                 <div className="w-full h-full bg-orange-50 flex justify-center items-center">
 
-                     <ComponentFooter title={'Passengers'} />
+                    <ComponentFooter title={'Passengers'} />
 
                     {deletionPopup &&
                         <RemovalPopup
@@ -68,21 +52,23 @@ export default function ViewPassengers() {
 
                     }
                     <div className="w-9/12 max-h-[60vh] overflow-y-auto">
-                        <table className="w-full border-collapse text-emerald-950">
+                        <table className="w-full table-fixed border-collapse text-emerald-950">
                             <thead>
                                 <tr>
-                                    <th>First Name</th>
-                                    <th>Last Name</th>
-                                    <th>Identification</th>
-                                    <th>Ticket Number</th>
-                                    <th>Flight</th>
-                                    <th>Status</th>
-                                    <th>Remove</th>
+                                    <th className="p-4">First Name</th>
+                                    <th className="p-4">Last Name</th>
+                                    <th className="p-4">Identification</th>
+                                    <th className="p-4">Ticket Number</th>
+                                    <th className="p-4">Flight</th>
+                                    <th className="p-4">Status</th>
+                                    <th className="p-4">Remove</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {passengers.map((passenger) => (
-                                    <tr key={passenger.identification} className="text-center border-b">
+                                    <tr key={passenger.identification} className={`text-center border-b
+                                        ${passenger.securityViolation ? 'bg-red-200' : ''}
+                                        ${passenger.checkInIssue ? 'bg-yellow-200' : ''}`}>
                                         <td className="p-4">{passenger.firstName}</td>
                                         <td className="p-4">{passenger.lastName}</td>
                                         <td className="p-4">{passenger.identification}</td>
@@ -104,7 +90,5 @@ export default function ViewPassengers() {
                 </div>
             )}</div>
         </>
-
-
     )
 }

@@ -5,7 +5,7 @@ import AddPassenger from "./AdminActions/AddPassenger"
 import ViewPassengers from "./AdminActions/ViewPassengers"
 import AddStaff from "./AdminActions/AddStaff"
 import ViewStaff from "./AdminActions/ViewStaff"
-import MessageBoard from "./AdminActions/MessageBoard"
+import MessageBoard from "../ReusableComponents/MessageBoard"
 
 import ComponentFooter from "../ReusableComponents/ComponentFooter"
 
@@ -15,7 +15,7 @@ export default function Administrator() {
     const [activeView, setActiveView] = useState("Dashboard")
 
     const renderAdminChoice = () => {
-        switch(activeView) {
+        switch (activeView) {
             case "addFlight":
                 return <AddFlight />
             case "viewFlights":
@@ -29,7 +29,7 @@ export default function Administrator() {
             case "viewStaff":
                 return <ViewStaff />
             case "messageBoard":
-                return <MessageBoard />
+                return <MessageBoard role={'admin'} />
         }
     }
 
@@ -80,9 +80,9 @@ export default function Administrator() {
     return (
         <>
             <div className="w-full h-full flex flex-col justify-center items-center">
-                
-                <ComponentFooter title={'Administrator Dashboard'}/>
-                
+
+                <ComponentFooter title={'Administrator Dashboard'} />
+
                 <div className="bg-orange-50 w-full h-full flex justify-center items-center">
                     <div className="w-1/2 h-4/12 grid grid-cols-2 gap-8 text-6xl">
                         {Object.entries(adminOptions).map(([option, data]) => (
@@ -91,13 +91,13 @@ export default function Administrator() {
                                 key={option}
                                 onMouseEnter={() => setHoveredOption(option)}
                                 onMouseLeave={() => setHoveredOption(null)}>
-                                    
-                                    <div className={`p-8 w-full h-full flex flex-row justify-between items-center gap-x-4 ${hoveredOption === option && data.options.length > 1 ? 'opacity-0' : 'opacity-100'}`}>
-                                        <div className="overflow-hidden">
-                                           {data.svg}
-                                        </div>
-                                        <p>{option}</p>
+
+                                <div className={`p-8 w-full h-full flex flex-row justify-between items-center gap-x-4 ${hoveredOption === option && data.options.length > 1 ? 'opacity-0' : 'opacity-100'}`}>
+                                    <div className="overflow-hidden">
+                                        {data.svg}
                                     </div>
+                                    <p>{option}</p>
+                                </div>
 
                                 {hoveredOption === option && data.options.length >= 1 && (
                                     <AdminOptions options={data.options} onSelect={setActiveView} />
