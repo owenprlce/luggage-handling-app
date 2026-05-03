@@ -1,6 +1,9 @@
 from flask import Blueprint, request, jsonify
 from app.AirportSystemMain import get_airport_system
-from app.domain.Staff import AirlineStaff, GateStaff, GroundStaff
+from app.domain.Staff import _StaffBase
+from app.domain.AirlineStaff import AirlineStaff
+from app.domain.GateStaff import GateStaff
+from app.domain.GroundStaff import GroundStaff
 from app.enums import StaffRole
 from app.utils.auth import role_required
 from app.utils.validators import validate_staff_body

@@ -17,7 +17,8 @@ from app.domain.AirlineStaff import AirlineStaff
 from app.domain.GateStaff import GateStaff
 from app.domain.GroundStaff import GroundStaff
 from app.domain.Staff import _StaffBase
-from app.domain.Message   import Message, MessageBoard
+from app.domain.Message   import Message
+from app.domain.MessageBoard import MessageBoard
 
 from app.enums import PassengerStatus, BagLocationType, BoardType, StaffRole
 

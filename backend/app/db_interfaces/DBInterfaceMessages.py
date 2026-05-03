@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from app.database import get_connection
-from app.domain.Message import Message, MessageBoard
+from app.domain.Message import Message 
+from app.domain.MessageBoard import MessageBoard
 from app.enums import BoardType
 
 
