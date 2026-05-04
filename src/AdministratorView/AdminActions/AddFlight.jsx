@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 
 import ComponentFooter from "../../ReusableComponents/ComponentFooter"
+import ComponentHeader from "../../ReusableComponents/ComponentHeader"
 import Alert from "../../ReusableComponents/Alert"
 import { useData } from "../../GlobalData/ApplicationData"
 
@@ -158,10 +159,9 @@ export default function AddFlight() {
                 <Alert error={errorMessage} />
             </div>
 
-            <ComponentFooter title={'Add Flight Form'} />
-
             <form onSubmit={addFlight} className="p-8 sm:p-12 relative w-full max-w-xl bg-emerald-800 outline-2 outline-emerald-950 rounded-3xl flex flex-col justify-center items-center gap-6 sm:gap-8">
 
+                <ComponentHeader title={'Add Flight Form'} />
 
                 <button type="submit" className={`cursor-pointer hover:scale-105 static mt-2 rounded-full bg-emerald-800 border-2 border-emerald-950 size-24 sm:size-28 gap-y-4 text-white transition-all duration-500 flex flex-col justify-center items-center
                                     ${validForm ? '' : 'ease-in opacity-0 pointer-events-none'}`}>
