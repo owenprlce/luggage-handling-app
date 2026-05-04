@@ -167,12 +167,12 @@ npm run build
 - `Message` table schema is aligned with backend message API.
 - Local CORS supports the Vite frontend.
 - Login page layout is fixed for narrower browser windows.
+- Add Flight
 
 ## Remaining Work / Known Limitations
 
 - Many actions are still frontend in-memory and may not persist after refresh or
   re-login, including:
-  - Add Flight
   - Delete Flight
   - Add Passenger
   - Check-in Passenger
