@@ -1,6 +1,7 @@
-import { useState, useEffect, use } from "react"
+import { useState, useEffect } from "react"
 
 import { useData } from "../GlobalData/ApplicationData"
+import { fetchInitialDemoData, loginStaff } from "../api/backend"
 
 import { passwordRegex } from "../RegexValidation/form-validation"
 
@@ -13,11 +14,11 @@ export default function Authentication({ setUserInformation, setRole }) {
 
     return (
         <>
-            <div className="fixed w-full h-full flex flex-row">
-                <div className="h-full w-auto shadow-xl/30">
-                    <img className="w-full h-full object-scale-down" src={`${import.meta.env.BASE_URL}luggage.jpg`} alt="" />
+            <div className="fixed inset-0 flex flex-col lg:flex-row overflow-y-auto bg-emerald-950">
+                <div className="h-44 sm:h-56 lg:h-full lg:w-5/12 xl:w-1/2 flex-shrink-0 shadow-xl/30">
+                    <img className="w-full h-full object-cover lg:object-scale-down" src={`${import.meta.env.BASE_URL}luggage.jpg`} alt="" />
                 </div>
-                <div className="relative h-full flex-1 bg-emerald-950 flex justify-center items-center overflow-hidden inset-shadow-sm">
+                <div className="relative min-h-[calc(100vh-11rem)] sm:min-h-[calc(100vh-14rem)] lg:min-h-screen flex-1 bg-emerald-950 flex justify-center items-center overflow-hidden inset-shadow-sm px-4 py-8">
                     {
                         view ? (
                             <AuthenticationPanel
@@ -42,7 +43,7 @@ export default function Authentication({ setUserInformation, setRole }) {
 
 function AuthenticationPanel({ setUserInformation, setRole, setView, setPendingUser }) {
 
-    const { staff, setCurrentUser } = useData()
+    const { setCurrentUser, setAuthToken, setFlights, setPassengers, setBags } = useData()
 
     const [username, setUsername] = useState("")
     const [password, setPassword] = useState("")
@@ -62,37 +63,27 @@ function AuthenticationPanel({ setUserInformation, setRole, setView, setPendingU
 
     }, [errorMessageState])
 
-    function login() {
+    async function login() {
         if (username === "" || password === "") {
             setErrorMessage("Missing username or password");
             setErrorMessageState(true);
             return;
         }
 
-        const user = staff.find(s => s.username === username && s.password === password);
+        try {
+            const session = await loginStaff(username, password)
+            const initialData = await fetchInitialDemoData(session.token)
 
-        if (user) {
-
-            if (user.changedPassword === false) {
-                setErrorMessage("You must change password upon initial login!")
-                setErrorMessageState(true)
-                setPendingUser(user)
-                setView(false)
-                return;
-            }
-
-            setRole(user.type)
-            setCurrentUser(user)
-            console.log(user.airline)
-
-            // May want to remove password attribute later to prevent password leakage
-            setUserInformation(user)
-            console.log(`Logged in as ${user.name} with role ${user.role}`);
-
-        } else {
-            setErrorMessage("Invalid login credentials")
+            setAuthToken(session.token)
+            setFlights(initialData.flights)
+            setPassengers(initialData.passengers)
+            setBags(initialData.bags)
+            setRole(session.user.type)
+            setCurrentUser(session.user)
+            setUserInformation(session.user)
+        } catch (error) {
+            setErrorMessage(error.message || "Invalid login credentials")
             setErrorMessageState(true)
-
         }
     }
 
@@ -102,22 +93,22 @@ function AuthenticationPanel({ setUserInformation, setRole, setView, setPendingU
                 <Alert error={errorMessage} />
             </div>
 
-            <div className="relative w-1/2 h-1/2 bg-orange-50 rounded-3xl flex flex-col justify-center items-center gap-y-8 shadow-2xl">
-                <div className="absolute top-16">
-                    <h2 className="text-5xl text-black">Airport Luggage Handler</h2>
+            <div className="relative w-full max-w-2xl min-h-[32rem] bg-orange-50 rounded-3xl flex flex-col justify-center items-center gap-y-8 shadow-2xl px-6 py-12">
+                <div>
+                    <h2 className="text-4xl lg:text-5xl text-center text-black">Airport Luggage Handler</h2>
                 </div>
 
                 <div className="w-10/12 flex flex-col gap-y-4">
-                    <label className="text-2xl text-black" for="username">Username</label>
+                    <label className="text-2xl text-black" htmlFor="username">Username</label>
                     <input onChange={(e) => setUsername(e.target.value)} className="w-full h-16 border-2 border-orange-900 bg-zinc-50 rounded-xl text-2xl px-4" type="username" value={username} />
                 </div>
 
                 <div className="w-10/12 flex flex-col gap-y-4">
-                    <label className="text-2xl text-black" for="password">Password</label>
+                    <label className="text-2xl text-black" htmlFor="password">Password</label>
                     <input onChange={(e) => setPassword(e.target.value)} className="w-full h-16 border-2 border-orange-900 bg-zinc-50 rounded-xl text-2xl px-4" type="password" value={password} />
                 </div>
 
-                <div className="absolute bottom-16 w-10/12 flex flex-row gap-x-4 text-black">
+                <div className="w-10/12 flex flex-row gap-x-4 text-black">
                     <div onClick={login} className="w-full h-16 flex justify-center items-center border-2 border-orange-900 bg-zinc-50 rounded-xl hover:cursor-pointer">Login</div>
                 </div>
             </div>
@@ -216,27 +207,27 @@ export function ChangePasswordPanel({ setView, pendingUser, setUserInformation, 
                 </div>
             )}
 
-            <div className="relative w-1/2 h-7/12 bg-orange-50 rounded-3xl flex flex-col justify-center items-center gap-y-8 shadow-2xl">
-                <div className="absolute top-16">
-                    <h2 className="text-5xl text-black">Change Password</h2>
+            <div className="relative w-full max-w-2xl min-h-[42rem] bg-orange-50 rounded-3xl flex flex-col justify-center items-center gap-y-8 shadow-2xl px-6 py-12">
+                <div>
+                    <h2 className="text-4xl lg:text-5xl text-center text-black">Change Password</h2>
                 </div>
 
                 <div className="w-10/12 flex flex-col gap-y-4">
-                    <label className="text-2xl text-black" for="old-password">Original Password</label>
+                    <label className="text-2xl text-black" htmlFor="old-password">Original Password</label>
                     <input onChange={(e) => setOldPassword(e.target.value)} className="w-full h-16 border-2 border-orange-900 bg-zinc-50 rounded-xl text-2xl px-4" type="password" value={oldPassword} />
                 </div>
 
                 <div className="w-10/12 flex flex-col gap-y-4">
-                    <label className="text-2xl text-black" for="password">New Password</label>
+                    <label className="text-2xl text-black" htmlFor="password">New Password</label>
                     <input onChange={(e) => setNewPassword(e.target.value)} className="w-full h-16 border-2 border-orange-900 bg-zinc-50 rounded-xl text-2xl px-4" type="password" value={newPassword} />
                 </div>
 
                 <div className="w-10/12 flex flex-col gap-y-4">
-                    <label className="text-2xl text-black" for="password">Confirm New Password</label>
+                    <label className="text-2xl text-black" htmlFor="password">Confirm New Password</label>
                     <input onChange={(e) => setConfirmNewPassword(e.target.value)} className="w-full h-16 border-2 border-orange-900 bg-zinc-50 rounded-xl text-2xl px-4" type="password" value={confirmNewPassword} />
                 </div>
 
-                <div className="absolute bottom-16 w-10/12 flex flex-row gap-x-4 text-black">
+                <div className="w-10/12 flex flex-row gap-x-4 text-black">
                     <div onClick={() => changePassword()} className="w-full h-16 flex justify-center items-center border-2 border-orange-900 bg-zinc-50 rounded-xl hover:cursor-pointer">Change Password</div>
                 </div>
             </div>

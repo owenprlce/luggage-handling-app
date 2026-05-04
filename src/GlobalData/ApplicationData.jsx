@@ -170,6 +170,7 @@ export function ApplicationData({ children }) {
     const [messages, setMessages] = useState([])
 
     const [currentUser, setCurrentUser] = useState([])
+    const [authToken, setAuthToken] = useState(null)
 
     const [alerted, setAlerted] = useState([]);
 
@@ -182,6 +183,7 @@ export function ApplicationData({ children }) {
                 bags, setBags,
                 messages, setMessages,
                 currentUser, setCurrentUser,
+                authToken, setAuthToken,
                 alerted, setAlerted
             }}
         >

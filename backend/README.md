@@ -1,35 +1,64 @@
-# Airport Luggage Handling — Flask Backend
- 
+# Airport Luggage Handling Flask Backend
+
 ## Setup
- 
+
 ### 1. Install dependencies
-```bash
+
+From the repository root:
+
+```powershell
 cd backend
 python -m venv venv
-source venv/bin/activate        # venv\Scripts\activate for Windows
+.\venv\Scripts\activate
 pip install -r requirements.txt
 ```
- 
+
+On macOS/Linux, use `source venv/bin/activate` instead of the Windows activate command.
+
 ### 2. Configure environment
-```bash
-cp .env.example .env
-# Fill in .env file with MySQL credentials and generate a JWT secret:
+
+```powershell
+copy .env.example .env
 python -c "import secrets; print(secrets.token_hex(32))"
 ```
- 
+
+Open `.env` and set the MySQL values plus `JWT_SECRET`.
+
 ### 3. Set up the database
-```bash
-mysql -u root -p < db_setup.sql    # SQL file to setup the database is located at src/SQL
-python hash_passwords.py           # prints UPDATE statements for bcrypt hashes
-# Paste the output into migration.sql, then:
-mysql -u root -p < migration.sql
+
+Run this from the repository root, not from `backend/`:
+
+```powershell
+mysql -u root -p < src\SQL\db_setup.sql
 ```
- 
+
+Important: the backend checks staff passwords with bcrypt. If seed passwords in
+`db_setup.sql` are plain text, login will not work until those values are
+replaced with bcrypt hashes.
+
 ### 4. Run the server
-```bash
+
+```powershell
+cd backend
+.\venv\Scripts\activate
 python run.py
-# Server starts at http://localhost:5000
 ```
- 
----
- 
+
+The server starts at `http://localhost:5000`.
+
+Health check:
+
+```powershell
+curl http://localhost:5000/health
+```
+
+## Main Routes
+
+- `POST /auth/login`
+- `POST /auth/login/passenger`
+- `GET /flights`
+- `GET /passengers`
+- `GET /bags`
+- `GET /staff`
+- `GET /messages`
+- `GET /departure/<flight_id>/ready`

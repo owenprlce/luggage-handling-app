@@ -68,21 +68,23 @@ CREATE TABLE IF NOT EXISTS Message (
     content TEXT NOT NULL,
     category VARCHAR(255) NOT NULL,
     created_at DATETIME NOT NULL,
-    username VARCHAR(255) NOT NULL,
-    recipient VARCHAR(255) NOT NULL,
-    FOREIGN KEY (username) REFERENCES Staff(username),
-    FOREIGN KEY (recipient) REFERENCES Staff(username)
+    board_type VARCHAR(255) NOT NULL,
+    sender_username VARCHAR(255) NOT NULL,
+    sender_role VARCHAR(255) NOT NULL,
+    airline_code VARCHAR(255),
+    FOREIGN KEY (sender_username) REFERENCES Staff(username),
+    FOREIGN KEY (airline_code) REFERENCES Airline(airline_code)
 );
 
 -- Add Account Data --
 INSERT INTO Staff_Login (username, user_password, user_role)
-VALUES ("ACarnline", "Password123", "Airline Staff");
+VALUES ("ACarnline", "$2b$12$r81uiDfySpitbOE1ZgkrBeCX9w7LkEZO0nZ8CV1V2AP7sa8BdK5mW", "Airline Staff");
 INSERT INTO Staff_Login (username, user_password, user_role)
-VALUES ("PMahomes", "Password456", "Gate Staff");
+VALUES ("PMahomes", "$2b$12$.nIhjtNE0Km5AYqyV7.g0uCxTLaIA5UlHIake9fJbdYDVVt95Y9e6", "Gate Staff");
 INSERT INTO Staff_Login (username, user_password, user_role)
-VALUES ("JDoe", "Password789", "Ground Staff");
+VALUES ("JDoe", "$2b$12$TJwREb9UeuvlsciJgGjhLuxIwQ3K2SkcXfnSiZRFzBtE8e77vv22S", "Ground Staff");
 INSERT INTO Staff_Login (username, user_password, user_role)
-VALUES ("Admin", "Password000", "Admin");
+VALUES ("Admin", "$2b$12$bpTn0bunDZzS22LQGRnfHOx7kjCWG1q6BoPN7A0V22FxXK2JJ9MNe", "Admin");
 
 -- Add Airline Data --
 INSERT INTO Airline (airline_code, airline_name)
@@ -125,8 +127,9 @@ INSERT INTO Staff (username, firstname, lastname, email, phone, airline_code)
 VALUES ("JDoe", "John", "Doe", "jdoe@gmail.com", 8888888888, NULL);
 
 -- Add Message Data --
-INSERT INTO Message (content, category, created_at, username, recipient)
-VALUES ("Test123", "Security Violation", NOW(), "ACarnline", "JDoe"); 
+INSERT INTO Message (content, category, created_at, board_type, sender_username, sender_role, airline_code)
+VALUES ("Test123", "Security Violation", NOW(), "Airline", "ACarnline", "Airline Staff", "AA");
 
 -- Drop Database if needed --
-drop database db;
+-- WARNING: Do not run this before a demo unless you intentionally want to delete the database.
+-- drop database db;
