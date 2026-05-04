@@ -1,26 +1,23 @@
 # Airport Luggage Handling App
 
-Class demo project for an airport luggage handling workflow. The app has a
+## Project Overview
+
+This is a class demo project for an airport luggage handling workflow. It uses a
 React/Vite frontend, a Flask backend API, and a MySQL database.
 
-## Project Layout
+## Quick Start
 
-- `src/` - React frontend screens and demo state.
-- `src/api/` - frontend API helper for backend login and initial data loading.
-- `src/GlobalData/ApplicationData.jsx` - shared React state used by the frontend.
-- `src/SQL/` - MySQL setup and demo SQL scripts.
-- `backend/` - Flask backend API.
-- `backend/app/routers/` - Flask routes for auth, flights, passengers, bags, staff, messages, and departure.
-- `backend/app/domain/` - domain classes such as `Flight`, `Passenger`, `Bag`, and `Staff`.
-- `backend/app/db_interfaces/` - MySQL query helpers.
-- `public/` - static frontend assets.
+1. Install frontend and backend dependencies.
+2. Create your own local `backend/.env`.
+3. Set up MySQL using `src/SQL/db_setup.sql`.
+4. Start the backend at `http://localhost:5000`.
+5. Start the frontend at `http://localhost:5173` or `http://127.0.0.1:5173`.
 
-## Prerequisites
+Health check:
 
-- Node.js and npm
-- Python 3
-- MySQL
-- Docker Desktop, optional, if local MySQL setup is difficult
+```powershell
+Invoke-RestMethod http://localhost:5000/health
+```
 
 ## Backend Setup
 
@@ -37,8 +34,8 @@ python -c "import secrets; print(secrets.token_hex(32))"
 
 Paste the generated secret into `backend/.env` as `JWT_SECRET`.
 
-Important: `backend/.env` is local only. Do not commit real `.env` files or
-real credentials.
+`backend/.env` is local only. Do not commit real `.env` files or real
+credentials.
 
 Start the backend:
 
@@ -48,18 +45,13 @@ cd backend
 python run.py
 ```
 
-The backend should run at `http://localhost:5000`.
+Backend URL: `http://localhost:5000`
 
-Health check:
+## Database Setup
 
-```powershell
-Invoke-RestMethod http://localhost:5000/health
-```
+### Local MySQL
 
-## Local MySQL Setup Without Docker
-
-Use this path when MySQL is installed directly on the computer and listening on
-port `3306`.
+Use this as the main setup path when MySQL is installed locally on port `3306`.
 
 Expected `backend/.env` database settings:
 
@@ -71,36 +63,30 @@ DB_USER=cs5336
 DB_PASSWORD=password
 ```
 
-From the repository root, run the setup SQL with a MySQL admin account:
+Run the setup SQL from the repository root with a MySQL admin account:
 
 ```powershell
 mysql -u root -p < src\SQL\db_setup.sql
 ```
 
-`src/SQL/db_setup.sql` creates:
+`db_setup.sql` creates database `db`, required tables, demo data, bcrypt-hashed
+demo passwords, and MySQL user `cs5336`@`localhost`.
 
-- database `db`
-- MySQL user `cs5336`@`localhost`
-- required project tables
-- demo airline, flight, passenger, bag, staff, and message data
-- bcrypt-hashed demo staff passwords
-- the `Message` table schema expected by the backend message API
+### Optional Docker MySQL
 
-After setup, backend login should work with the demo accounts below.
-
-## Optional Docker MySQL Setup
-
-Docker can be used instead of local MySQL. This is useful if port `3306` is
-already used or local MySQL permissions are hard to configure.
-
-Use host port `3307` to avoid conflicting with local MySQL:
+Docker can be used if local MySQL is difficult to configure. Use host port
+`3307` to avoid conflicts with local MySQL:
 
 ```powershell
 docker run -d --name luggage-mysql-cs7336 -e MYSQL_ROOT_PASSWORD=rootpassword -p 3307:3306 mysql:8.0
 ```
 
-Then run only the setup SQL inside that project database environment. Do not run
-`src/SQL/db_demo.sql` for setup.
+Wait for the container to fully start, then run the setup SQL against port
+`3307`:
+
+```powershell
+mysql -h 127.0.0.1 -P 3307 -u root -p < src\SQL\db_setup.sql
+```
 
 Expected `backend/.env` database settings for Docker:
 
@@ -112,17 +98,22 @@ DB_USER=cs5336
 DB_PASSWORD=password
 ```
 
-## SQL File Notes
+If the backend cannot connect as `cs5336`, the Docker MySQL instance may need a
+host-connection grant. First enter the Docker MySQL prompt:
 
-- `src/SQL/db_setup.sql` is the initial setup file.
-- `src/SQL/db_demo.sql` is not the initial setup file.
-- `src/SQL/db_demo.sql` contains demo `INSERT`, `UPDATE`, and `DELETE`
-  operations and should not be run casually.
-- The old `drop database db;` line in `src/SQL/db_setup.sql` is commented out.
-  Do not uncomment it unless you intentionally want to delete the project
-  database.
-- `src/SQL/db_setup.sql` is intended for a fresh project database. It may fail
-  if database `db`, user `cs5336`@`localhost`, or seeded rows already exist.
+```powershell
+docker exec -it luggage-mysql-cs7336 mysql -u root -p
+```
+
+Then run:
+
+```sql
+CREATE USER IF NOT EXISTS 'cs5336'@'%' IDENTIFIED BY 'password';
+GRANT ALL PRIVILEGES ON db.* TO 'cs5336'@'%';
+FLUSH PRIVILEGES;
+```
+
+Do not run `src/SQL/db_demo.sql` for setup.
 
 ## Frontend Setup
 
@@ -133,22 +124,16 @@ npm install
 npm run dev
 ```
 
-The frontend runs at:
+Frontend URLs:
 
 - `http://localhost:5173`
 - `http://127.0.0.1:5173`
 
-Useful frontend commands:
+Useful command:
 
 ```powershell
 npm run build
-npm run lint
 ```
-
-## Backend URL
-
-- Backend API: `http://localhost:5000`
-- Health check: `GET /health`
 
 ## Demo Accounts
 
@@ -157,25 +142,53 @@ npm run lint
 - `JDoe` / `Password789` - Ground Staff
 - `Admin` / `Password000` - Admin
 
+## Recent Integration Changes
+
+- Demo staff passwords in `src/SQL/db_setup.sql` were changed to bcrypt hashes.
+- `Message` table schema was updated to match the backend message API.
+- Frontend login is connected to backend `POST /auth/login`.
+- A frontend API helper was added.
+- Frontend loads flights, passengers, and bags from backend after login.
+- CORS was fixed for `localhost:5173` and `127.0.0.1:5173`.
+- Login page responsive layout was fixed.
+- Local MySQL and optional Docker setup notes were added.
+
 ## Current Working Features
 
-- backend health check
-- staff login
-- JWT authentication
-- frontend login connected to backend `POST /auth/login`
-- frontend loads flights, passengers, and bags from backend after login
-- demo staff passwords stored as bcrypt hashes in setup SQL
-- `Message` table schema aligned with backend message API
-- CORS supports the local Vite frontend on `localhost` and `127.0.0.1`
-- login page responsive layout fixed for narrow desktop/browser widths
+- Backend health check works.
+- Staff login works.
+- JWT authentication works.
+- Frontend login connects to backend.
+- Frontend loads flights, passengers, and bags from backend after login.
+- `Message` table schema is aligned with backend message API.
+- Local CORS supports the Vite frontend.
+- Login page layout is fixed for narrower browser windows.
 
-## Known Limitations / TODO
+## Remaining Work / Known Limitations
 
-- Many add, delete, update, check-in, board, and load actions are still frontend
-  in-memory operations and are not fully persisted to the backend database.
-- Frontend message sending/display may still use local React state.
-- Baggage access permission rules should be confirmed before the final demo. The
-  current `GET /bags?flight_id=...` route is JWT-protected but does not restrict
+- Many actions are still frontend in-memory and may not persist after refresh or
+  re-login, including:
+  - Add Flight
+  - Delete Flight
+  - Add Passenger
+  - Check-in Passenger
+  - Board Passenger
+  - Add Staff / Delete Staff
+  - Load Bag
+  - Update Bag Location
+  - Send Message
+- Frontend message sending/display may still need backend integration.
+- Baggage access permission rules still need confirmation.
+- Currently, `GET /bags?flight_id=...` is JWT-protected but does not restrict
   results by staff airline.
-- Teammates should verify local MySQL setup on their own machines.
-- Do not commit real `.env` files or real credentials.
+- Teammates should verify MySQL setup on their own machines.
+
+## SQL Notes
+
+- `src/SQL/db_setup.sql` is the setup file.
+- `src/SQL/db_demo.sql` is not the initial setup file.
+- `src/SQL/db_demo.sql` contains demo `INSERT`, `UPDATE`, and `DELETE`
+  operations and should not be run casually.
+- The old `DROP DATABASE db;` line in `db_setup.sql` is commented out.
+- `db_setup.sql` is best for a fresh project database and may fail or need
+  adjustment if `db`, `cs5336`, or seeded rows already exist.
