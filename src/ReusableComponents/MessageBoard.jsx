@@ -24,14 +24,14 @@ export default function MessageBoard({ airline, role }) {
     })
 
     if (messagesToDisplay.length < 1) return (
-        <div className="w-full h-full bg-orange-50 flex justify-center items-center">
-            <p className="text-emerald-950 text-6xl">No messages</p>
+        <div className="w-full min-h-screen bg-orange-50 flex justify-center items-center px-4 py-28">
+            <p className="text-emerald-950 text-4xl md:text-6xl text-center">No messages</p>
         </div>
     );
 
     return (
-        <div className="w-screen h-screen flex justify-center items-center bg-orange-50">
-            <div className="w-9/12 h-auto max-h-9/12 p-4 grid grid-cols-3 gap-6 overflow-y-scroll">
+        <div className="w-full min-h-screen flex justify-center items-center bg-orange-50 px-4 py-28">
+            <div className="w-full max-w-6xl h-auto max-h-[70vh] p-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 overflow-y-auto">
                 {messagesToDisplay.map((msg, idx) => (
                     <div key={idx} className="p-4 bg-emerald-800 rounded-xl border-2 border-emerald-950 shadow-md flex flex-col gap-2">
                         <p className="text-white font-semibold">{msg.msg}</p>

@@ -133,21 +133,21 @@ export default function CheckIn() {
 
     }
     return (
-        <div className="w-full h-full flex justify-center items-center">
+        <div className="w-full min-h-screen flex justify-center items-center px-4 py-32 overflow-y-auto">
 
-            <div className={`absolute top-36 right-8 h-24 w-96 transition-all ease-in-out ${errorMessageState ? 'duration-300 translate-x-0 opacity-100' : 'duration-300 translate-x-full opacity-0'}`}>
+            <div className={`fixed top-32 right-4 z-40 h-24 w-[min(24rem,calc(100vw-2rem))] transition-all ease-in-out ${errorMessageState ? 'duration-300 translate-x-0 opacity-100' : 'duration-300 translate-x-full opacity-0'}`}>
                 <Alert error={errorMessage} />
             </div>
 
 
             <form
                 onSubmit={CheckInPassenger}
-                className="p-16 relative w-4/12 min-h-2/12 bg-emerald-800 outline-2 outline-emerald-950 rounded-3xl flex flex-col justify-center items-center gap-8"
+                className="p-8 sm:p-12 relative w-full max-w-xl bg-emerald-800 outline-2 outline-emerald-950 rounded-3xl flex flex-col justify-center items-center gap-6 sm:gap-8"
             >
                 <button
                     type="submit"
-                    className={`cursor-pointer hover:scale-105 absolute bottom-0 -right-[120px] rounded-full bg-emerald-800 border-2 border-emerald-950 size-32 gap-y-4 text-white transition-all duration-500 flex flex-col justify-center items-center
-                            ${validForm ? '' : 'ease-in opacity-0'}`}
+                    className={`cursor-pointer hover:scale-105 static mt-2 rounded-full bg-emerald-800 border-2 border-emerald-950 size-24 sm:size-28 gap-y-4 text-white transition-all duration-500 flex flex-col justify-center items-center
+                            ${validForm ? '' : 'ease-in opacity-0 pointer-events-none'}`}
                 >
                     <svg
                         className="fill-white"

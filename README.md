@@ -151,6 +151,10 @@ npm run build
 - Frontend loads flights, passengers, and bags from backend after login.
 - CORS was fixed for `localhost:5173` and `127.0.0.1:5173`.
 - Login page responsive layout was fixed.
+- Several frontend layout issues were adjusted for demo stability.
+- Some dashboard, table, and form layouts were adjusted to reduce overlapping or
+  off-screen content.
+- Add Staff form title/layout overlap was fixed.
 - Local MySQL and optional Docker setup notes were added.
 
 ## Current Working Features
@@ -181,6 +185,8 @@ npm run build
 - Baggage access permission rules still need confirmation.
 - Currently, `GET /bags?flight_id=...` is JWT-protected but does not restrict
   results by staff airline.
+- Teammates should confirm whether any expected features are still missing or
+  incomplete, such as forgot password/password recovery.
 - Teammates should verify MySQL setup on their own machines.
 
 ## SQL Notes

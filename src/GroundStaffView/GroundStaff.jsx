@@ -33,11 +33,11 @@ export default function GroundStaff({ user }) {
 
     return (
         <>
-            <div className="w-full h-full bg-orange-50">
+            <div className="relative w-full min-h-screen bg-orange-50 overflow-y-auto">
                 <ComponentFooter title={"Ground Staff Dashboard"} />
                 {
                     !selectedFlight && locationToWork === "gate" &&
-                    <div className="absolute h-9/12 top-1/2 left-0 -translate-y-1/2">
+                    <div className="z-20 absolute h-9/12 top-1/2 left-0 -translate-y-1/2">
                         <StaffNavigation setView={setView} type={'gate-staff'} />
                     </div>
 
@@ -52,13 +52,13 @@ export default function GroundStaff({ user }) {
 
 function SelectWorkLocation({ setLocationToWork }) {
     return (
-        <div className="w-full h-full flex justify-center items-center bg-orange-50">
-            <div className="w-2/3 flex flex-col justify-center items-center gap-8">
+        <div className="w-full min-h-screen flex justify-center items-center bg-orange-50 px-4 py-32">
+            <div className="w-full max-w-4xl flex flex-col justify-center items-center gap-8">
                 <h2 className="text-5xl text-emerald-950 text-center mb-8">
                     Select Work Location
                 </h2>
 
-                <div className="w-5/12 flex flex-col gap-8">
+                <div className="w-full max-w-xl flex flex-col gap-8">
                     <div
                         onClick={() => setLocationToWork("gate")}
                         className="cursor-pointer p-16 bg-emerald-800 border-2 border-emerald-950 rounded-2xl flex flex-row items-center justify-between hover:scale-105 transition-transform duration-300"
@@ -83,8 +83,8 @@ function SelectWorkLocation({ setLocationToWork }) {
 function GateLocation({ selectedFlight, setSelectedFlight }) {
 
     return (
-        <div className="w-full h-full flex justify-center items-center">
-            <div className="w-full h-9/12">
+        <div className="w-full min-h-screen flex justify-center items-center px-4 py-28">
+            <div className="w-full min-h-[70vh] overflow-auto">
                 <FlightsList selectedFlight={selectedFlight} setSelectedFlight={setSelectedFlight} />
             </div>
         </div>
@@ -186,12 +186,12 @@ function SecurityCheckpoint() {
     };
 
     return (
-        <div className="w-full h-full flex justify-center items-center">
-            <div className={`absolute top-36 right-8 h-24 w-96 transition-all ease-in-out ${errorMessageState ? 'duration-300 translate-x-0 opacity-100' : 'duration-300 translate-x-full opacity-0'}`}>
+        <div className="w-full min-h-screen flex justify-center items-center px-4 py-32">
+            <div className={`fixed top-32 right-4 z-40 h-24 w-[min(24rem,calc(100vw-2rem))] transition-all ease-in-out ${errorMessageState ? 'duration-300 translate-x-0 opacity-100' : 'duration-300 translate-x-full opacity-0'}`}>
                 <Alert error={errorMessage} />
             </div>
 
-            <div className="w-10/12 h-8/12 flex flex-col gap-8 overflow-hidden">
+            <div className="w-full max-w-7xl min-h-[65vh] flex flex-col gap-8">
 
                 <div className="flex-1 bg-emerald-800 rounded-2xl p-6 border-2 border-emerald-950 overflow-hidden flex flex-col">
                     <div className="flex items-center justify-between mb-8">
@@ -211,7 +211,7 @@ function SecurityCheckpoint() {
                                 </div>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-4 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
                                 {bagsQueue.map((bag, index) => {
                                     const passenger = passengers.find(p => p.ticketNumber === bag.ticketNumber);
                                     const flight = flights.find(f => f.ticketNumbers && f.ticketNumbers.includes(bag.ticketNumber));
@@ -219,10 +219,10 @@ function SecurityCheckpoint() {
                                     return (
                                         <div
                                             key={bag.bagId}
-                                            className="w-full h-full p-4 bg-orange-50 border-2 border-emerald-950 rounded-xl flex flex-row justify-between"
+                                            className="w-full h-full p-4 bg-orange-50 border-2 border-emerald-950 rounded-xl flex flex-col sm:flex-row justify-between gap-4"
                                         >
 
-                                            <div className="w-10/12 h-full text-emerald-950 flex flex-col justify-between">
+                                            <div className="w-full sm:w-10/12 h-full text-emerald-950 flex flex-col justify-between">
                                                 <p className="text-lg font-bold">Bag ID: {bag.bagId}</p>
                                                 <p className="text-lg">From: {bag.location}</p>
                                                 <p className="text-lg">Ticket: {bag.ticketNumber}</p>
@@ -235,7 +235,7 @@ function SecurityCheckpoint() {
 
                                             </div>
 
-                                            <div className="w-4/12 flex flex-col items-end justify-between">
+                                            <div className="w-full sm:w-4/12 flex flex-col items-end justify-between gap-3">
                                                 <div>
                                                     <span className="text-lg font-bold text-white bg-emerald-950 px-3 py-1 rounded-full">
                                                         #{index + 1}

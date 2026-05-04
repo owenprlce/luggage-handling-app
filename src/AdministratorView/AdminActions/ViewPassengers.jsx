@@ -26,13 +26,13 @@ export default function ViewPassengers() {
 
     return (
         <>
-            <div className="w-full h-full">{passengers.length < 1 ? (
+            <div className="w-full min-h-screen">{passengers.length < 1 ? (
 
-                <div className="w-full h-full flex justify-center items-center bg-orange-50">
-                    <p className="text-6xl text-emerald-950">No passengers present</p>
+                <div className="w-full min-h-screen flex justify-center items-center bg-orange-50 px-4 py-32">
+                    <p className="text-4xl md:text-6xl text-emerald-950 text-center">No passengers present</p>
                 </div>
             ) : (
-                <div className="w-full h-full bg-orange-50 flex justify-center items-center">
+                <div className="w-full min-h-screen bg-orange-50 flex justify-center items-center px-4 py-32">
 
                     <ComponentFooter title={'Passengers'} />
 
@@ -51,8 +51,8 @@ export default function ViewPassengers() {
                             message={`Are you sure you want to remove passenger ${passengerToDelete.firstName} ${passengerToDelete.lastName}?`} />
 
                     }
-                    <div className="w-9/12 max-h-[60vh] overflow-y-auto">
-                        <table className="w-full table-fixed border-collapse text-emerald-950">
+                    <div className="w-full max-w-6xl max-h-[65vh] overflow-x-auto overflow-y-auto">
+                        <table className="min-w-[900px] w-full table-fixed border-collapse text-emerald-950">
                             <thead>
                                 <tr>
                                     <th className="p-4">First Name</th>

@@ -89,7 +89,7 @@ function AuthenticationPanel({ setUserInformation, setRole, setView, setPendingU
 
     return (
         <>
-            <div className={`absolute top-8 right-8 h-24 w-96 transition-all ease-in-out shadow-2xs ${errorMessageState ? 'duration-300 translate-x-0 opacity-100' : 'duration-300 translate-x-full opacity-0'}`}>
+            <div className={`fixed top-8 right-4 z-40 h-24 w-[min(24rem,calc(100vw-2rem))] transition-all ease-in-out shadow-2xs ${errorMessageState ? 'duration-300 translate-x-0 opacity-100' : 'duration-300 translate-x-full opacity-0'}`}>
                 <Alert error={errorMessage} />
             </div>
 
@@ -192,14 +192,14 @@ export function ChangePasswordPanel({ setView, pendingUser, setUserInformation, 
     return (
 
         <>
-            <div className={`absolute top-8 right-8 h-24 w-96 transition-all ease-in-out ${errorMessageState ? 'duration-300 translate-x-0 opacity-100' : 'duration-300 translate-x-full opacity-0'}`}>
+            <div className={`fixed top-8 right-4 z-40 h-24 w-[min(24rem,calc(100vw-2rem))] transition-all ease-in-out ${errorMessageState ? 'duration-300 translate-x-0 opacity-100' : 'duration-300 translate-x-full opacity-0'}`}>
                 <Alert error={errorMessage} />
             </div>
 
             {isLoggedIn && (
                 <div
                     onClick={() => setView(false)}
-                    className="z-20 rounded-[50px] absolute top-4 left-4 bg-emerald-800 border-2 border-emerald-700 cursor-pointer"
+                    className="z-40 rounded-[50px] fixed top-4 left-4 bg-emerald-800 border-2 border-emerald-700 cursor-pointer"
                 >
                     <div className="h-20 w-20 flex justify-center items-center">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#FFFFFF" viewBox="0 0 256 256"><path d="M232,144a64.07,64.07,0,0,1-64,64H80a8,8,0,0,1,0-16h88a48,48,0,0,0,0-96H51.31l34.35,34.34a8,8,0,0,1-11.32,11.32l-48-48a8,8,0,0,1,0-11.32l48-48A8,8,0,0,1,85.66,45.66L51.31,80H168A64.07,64.07,0,0,1,232,144Z"></path></svg>

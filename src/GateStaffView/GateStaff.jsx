@@ -24,11 +24,11 @@ export default function GateStaff({ user }) {
 
     return (
         <>
-            <div className="w-full h-full bg-orange-50">
+            <div className="relative w-full min-h-screen bg-orange-50 overflow-y-auto">
                 <ComponentFooter title={"Gate Staff Dashboard"} />
                 {
                     !selectedFlight &&
-                    <div className="absolute h-9/12 top-1/2 left-0 -translate-y-1/2">
+                    <div className="z-20 absolute h-9/12 top-1/2 left-0 -translate-y-1/2">
                         <StaffNavigation setView={setView} isHovered={isHovered} type={'gate-staff'} />
                     </div>
 
@@ -44,8 +44,8 @@ export default function GateStaff({ user }) {
 function FlightInformation({ airline, selectedFlight, setSelectedFlight }) {
 
     return (
-        <div className="w-full h-full flex justify-center items-center">
-            <div className="w-full h-9/12 overflow-scroll">
+        <div className="w-full min-h-screen flex justify-center items-center px-4 py-28">
+            <div className="w-full min-h-[70vh] overflow-auto">
                 <FlightsList airline={airline} selectedFlight={selectedFlight} setSelectedFlight={setSelectedFlight} />
             </div>
         </div>

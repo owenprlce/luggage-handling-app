@@ -19,8 +19,8 @@ export default function Home() {
 
         if (showChangePassword) {
             return (
-                <div className="w-full h-full bg-emerald-950 flex justify-center items-center">
-                    <div className="flex w-7/12 h-full justify-center items-center">
+                <div className="w-full min-h-screen bg-emerald-950 flex justify-center items-center px-4 py-8">
+                    <div className="flex w-full max-w-3xl min-h-screen justify-center items-center">
                         <ChangePasswordPanel 
                             pendingUser={userInformation}
                             setView={setShowChangePassword}
@@ -51,7 +51,7 @@ export default function Home() {
 
     return (
         <>
-            <div className="w-screen h-screen">
+            <div className="w-full min-h-screen overflow-y-auto">
                 {role !== null ? (renderUserDashboard()) : (<Authentication setUserInformation={setUserInformation} setRole={setRole} />)}
             </div>
         </>
@@ -63,9 +63,9 @@ function InformationHeader({ userInformation, setRole, setShowChangePassword }) 
     const [show, setShow] = useState(false)
 
     return (
-        <div className="z-0 p-4 absolute w-full h-28 bg-emerald-950 flex justify-end items-center">
+        <div className="z-30 p-4 sticky top-0 w-full h-28 bg-emerald-950 flex justify-end items-center">
             <div onClick={() => setShow(prev => !prev)}
-                className={`absolute top-4 right-4 flex justify-center items-center bg-emerald-800 transition-all origin-top overflow-hidden border-2 border-emerald-700 duration-300 ease-in-out
+                className={`z-40 absolute top-4 right-4 flex justify-center items-center bg-emerald-800 transition-all origin-top overflow-hidden border-2 border-emerald-700 duration-300 ease-in-out
                         ${show ? 'w-64 h-auto rounded-lg cursor-default' : 'cursor-pointer w-20 h-20 rounded-[50px]'}`}>
 
 
