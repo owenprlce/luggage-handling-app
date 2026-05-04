@@ -4,13 +4,15 @@ import ComponentFooter from "../../ReusableComponents/ComponentFooter"
 import ComponentHeader from "../../ReusableComponents/ComponentHeader"
 import Alert from "../../ReusableComponents/Alert"
 import { useData } from "../../GlobalData/ApplicationData"
+import { addFlight } from "../../api/backend"   // <-- import the api utility
 
 import { airlineCodeRegex, flightNumberRegex, terminalRegex, gateNumberRegex, alphaRegex } from "../../RegexValidation/form-validation"
 
 export default function AddFlight() {
 
     // ***Backend Route (Add Flight) 
-    const { flights, setFlights } = useData()
+    
+    const { flights, setFlights, authToken } = useData()
 
     const [airlineCode, setAirlineCode] = useState("")
     const [flightNumber, setFlightNumber] = useState("")
@@ -31,6 +33,8 @@ export default function AddFlight() {
     // Temporary error message to display
     const [errorMessage, setErrorMessage] = useState("")
     const [errorMessageState, setErrorMessageState] = useState(false)
+
+    const [isLoading, setIsLoading] = useState(false)
 
     useEffect(() => {
 
@@ -101,55 +105,47 @@ export default function AddFlight() {
         }
     }
 
-    function addFlight(e) {
+    async function addNewFlight(e) {
         e.preventDefault()
-
-        const existingFlight = flights.some(f => f.flightId === `${airlineCode}${flightNumber}`)
-        const occupiedFlightBay = flights.some(f => f.gateInformation.terminal === terminal && f.gateInformation.gateNumber === gateNumber)
-
-        let _flightNumber = flightNumberValidation(flightNumber)
-
-        if (existingFlight) {
-            setErrorMessage(`Flight ${airlineCode}${_flightNumber} already exists!`)
-            setErrorMessageState(true)
-            return;
-        }
-
-        else if (occupiedFlightBay) {
-            setErrorMessage(`Flight bay ${terminal}${gateNumber} is occupied!`)
-            setErrorMessageState(true)
-            return;
-        } 
-        
-        else {
-            setErrorMessage(`Flight ${airlineCode}${_flightNumber} to ${destination} added!`)
-            setErrorMessageState(true)
-        }
-
-        const flightToAdd = {
-            flightId: `${airlineCode}${_flightNumber}`,
-            airlineCode: airlineCode,
-            flightNumber: _flightNumber,
-            airlineName: airlineName,
-            destination: destination,
-            gateInformation: {
+        if (isLoading) return
+        setIsLoading(true)
+    
+        const _flightNumber = flightNumberValidation(flightNumber)
+        const flightId = `${airlineCode}${_flightNumber}`
+    
+        try {
+            await addFlight(authToken, {
+                flightId,
+                destination,
                 terminal,
-                gateNumber
-            },
-            ticketNumbers: []
+                gateNumber,
+                airlineCode,
+            })
+    
+            // Backend confirmed success — update local state
+            setFlights(flights => [...flights, {
+                flightId,
+                airlineCode,
+                flightNumber: _flightNumber,
+                airlineName,
+                destination,
+                gateInformation: { terminal, gateNumber },
+                ticketNumbers: [],
+            }])
+    
+            setErrorMessage(`Flight ${flightId} to ${destination} added!`)
+            setErrorMessageState(true)
+    
+            setAirlineCode(""); setFlightNumber(""); setTerminal("")
+            setGateNumber("");  setAirlineName("");  setDestination("")
+    
+        } catch (err) {
+            // apiRequest throws an Error with the server's message baked in
+            setErrorMessage(err.message || "Failed to add flight.")
+            setErrorMessageState(true)
+        } finally {
+            setIsLoading(false)
         }
-
-        setFlights(flights => [...flights, flightToAdd])
-
-        console.log("Flight added successfully", flightToAdd);
-
-        setAirlineCode("");
-        setFlightNumber("");
-        setTerminal("");
-        setGateNumber("");
-        setAirlineName("");
-        setDestination("")
-
     }
 
     return (
@@ -159,7 +155,7 @@ export default function AddFlight() {
                 <Alert error={errorMessage} />
             </div>
 
-            <form onSubmit={addFlight} className="p-8 sm:p-12 relative w-full max-w-xl bg-emerald-800 outline-2 outline-emerald-950 rounded-3xl flex flex-col justify-center items-center gap-6 sm:gap-8">
+            <form onSubmit={addNewFlight} className="p-8 sm:p-12 relative w-full max-w-xl bg-emerald-800 outline-2 outline-emerald-950 rounded-3xl flex flex-col justify-center items-center gap-6 sm:gap-8">
 
                 <ComponentHeader title={'Add Flight Form'} />
 
