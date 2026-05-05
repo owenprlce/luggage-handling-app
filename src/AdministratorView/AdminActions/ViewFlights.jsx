@@ -14,15 +14,24 @@ export default function ViewFlights() {
     const { flights, setFlights, passengers, setPassengers, bags, setBags, authToken } = useData()
 
     // When admin removes flight, all passengers aboard flight, along with their bags are removed from the system
-    const removeFlight = (flightId) => {
-        setFlights(prev => prev.filter(flight => flight.flightId !== flightId))
+    const removeFlight = async (flightId) => {
+        try {
+            // Tell the backend to remove the flight first.
+            // The backend cascades the deletion to passengers and bags automatically.
+            await removeFlightAPI(authToken, flightId)
 
-        const passengersOnFlight = passengers.filter(p => p.flight === flightId)
-        const ticketNumbers = passengersOnFlight.map(p => p.ticketNumber)
+            // Backend confirmed — now update local state to match
+            setFlights(prev => prev.filter(flight => flight.flightId !== flightId))
 
-        setPassengers(passenger => passenger.filter(p => p.flight !== flightId))
+            const passengersOnFlight = passengers.filter(p => p.flight === flightId)
+            const ticketNumbers = passengersOnFlight.map(p => p.ticketNumber)
+            setPassengers(prev => prev.filter(p => p.flight !== flightId))
+            setBags(prev => prev.filter(b => !ticketNumbers.includes(b.ticketNumber)))
 
-        setBags(bag => bag.filter(b => !ticketNumbers.includes(b.ticketNumber)))
+        } catch (err) {
+            // If the backend call fails, local state is not touched
+            alert(err.message || "Failed to remove flight.")
+        }
     }
 
     return (
