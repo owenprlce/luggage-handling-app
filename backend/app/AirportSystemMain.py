@@ -79,6 +79,11 @@ class AirportSystemMain:
         flight = self.db_flight.retrieve_flight(flight_id)
         if flight is None:
             raise ValueError(f"Flight {flight_id} not found")
+        
+        self.db_bag.remove_bags_by_flight(flight_id)
+        self.db_passenger.remove_passengers_by_flight(flight_id)
+
+
         self.db_flight.remove_flight(flight_id)
 
     def get_flight(self, flight_id: str) -> Flight:

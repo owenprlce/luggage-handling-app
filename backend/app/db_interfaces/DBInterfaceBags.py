@@ -117,3 +117,15 @@ class DBInterfaceBags:
         finally:
             cursor.close()
             conn.close()
+
+    def remove_bags_by_flight(self, flight_id: str) -> None:
+        conn, cursor = get_connection()
+        try:
+            cursor.execute(
+                "DELETE FROM Bag WHERE flight_id = %s",
+                (flight_id.upper(),)
+            )
+            conn.commit()
+        finally:
+            cursor.close()
+            conn.close()
