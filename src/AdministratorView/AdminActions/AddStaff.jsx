@@ -125,6 +125,7 @@ export default function AddStaff() {
                 await sendCredentialsToEmail(firstName, lastName, email,
                     result.username, result.temporary_password)
                 console.log("Credentials emailed successfully")
+                console.log(result.username, result.temporary_password)
             } catch (emailError) {
                 console.error("Could not send email:", emailError)
             }
@@ -135,8 +136,8 @@ export default function AddStaff() {
     // I can send you my credentials if you want to test on your end, if not, I console.log each created staff and it contains the generated credentials
     const sendCredentialsToEmail = (firstName, lastName, email, username, password) => {
         return emailjs.send(
-            // Service ID
-            // Template ID
+            import.meta.env.VITE_APP_SERVICE_ID,
+            import.meta.env.VITE_APP_TEMPLATE_ID,
             {
                 email: email,
                 first: firstName,
@@ -144,7 +145,7 @@ export default function AddStaff() {
                 username: username,
                 password: password,
             },
-            // Public Key
+            import.meta.env.VITE_APP_PUBLIC_KEY
         )
     }
 

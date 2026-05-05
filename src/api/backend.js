@@ -84,8 +84,8 @@ function mapStaff(staff) {
         emailAddress: staff.email,
         phone: staff.phone,
         phoneNumber: staff.phone,
-        role: staff.role,
-        type: roleToFrontend(staff.role),
+        role: staff.type,
+        type: roleToFrontend(staff.type),
         airlineCode,
         airline: airlineCode,
     };

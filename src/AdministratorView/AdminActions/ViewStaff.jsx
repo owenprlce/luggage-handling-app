@@ -10,6 +10,8 @@ export default function ViewStaff() {
 
     const { staff, setStaff, authToken } = useData()
 
+    console.log(staff)
+
     const staffToDisplay = staff.filter(s => s.type !== 'admin');
 
     // ***Backend Route (Fetch Flights) 
@@ -75,7 +77,7 @@ export default function ViewStaff() {
                             <tbody>
                                 {staffToDisplay.map((staff) => (
                                     <tr key={staff.username} className="text-center border-b">
-                                        <td className="p-4">{staff.type}</td>
+                                        <td className="p-4">{staff.role}</td>
                                         <td className="p-4">{staff.firstName}</td>
                                         <td className="p-4">{staff.lastName}</td>
                                         <td className="p-4">{staff.emailAddress}</td>
