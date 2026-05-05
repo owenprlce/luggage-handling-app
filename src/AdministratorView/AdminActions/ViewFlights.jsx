@@ -3,6 +3,7 @@ import { useState } from "react"
 import RemovalPopup from "../../ReusableComponents/Reusable";
 import ComponentFooter from "../../ReusableComponents/ComponentFooter";
 import { useData } from "../../GlobalData/ApplicationData";
+import { removeFlight as removeFlightAPI } from "../../api/backend"
 
 export default function ViewFlights() {
 
@@ -10,7 +11,7 @@ export default function ViewFlights() {
     const [deletionPopup, setDeletionPopup] = useState(false);
     const [flightToDelete, setFlightToDelete] = useState("");
 
-    const { flights, setFlights, passengers, setPassengers, bags, setBags } = useData()
+    const { flights, setFlights, passengers, setPassengers, bags, setBags, authToken } = useData()
 
     // When admin removes flight, all passengers aboard flight, along with their bags are removed from the system
     const removeFlight = (flightId) => {

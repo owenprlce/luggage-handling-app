@@ -74,6 +74,19 @@ function mapBag(bag) {
     };
 }
 
+function mapStaff(staff) {
+    return {
+        username: staff.username,
+        firstName: staff.firstname,
+        lastName: staff.lastname,
+        email: staff.email,
+        phone: staff.phone,
+        role: staff.role,
+        type: roleToFrontend(staff.role),
+        airlineCode: staff.airline_code || "",
+    };
+}
+
 function mapMessage(message) {
     return {
         messageId: message.message_id,
