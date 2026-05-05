@@ -9,6 +9,7 @@ export default function MessageBoard({ airline, role }) {
 
     const boardTypeByRole = {
         "airline-staff": "Airline",
+        "ground-staff": "Ground",
     };
 
     const boardType = boardTypeByRole[role];

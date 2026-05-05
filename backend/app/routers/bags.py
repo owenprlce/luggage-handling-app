@@ -91,6 +91,15 @@ def load_bag(bag_id):
 def remove_bag(bag_id):
     """Admin or Airline Staff: removes a single bag (e.g. after a security violation)."""
     system = get_airport_system()
+
+    user = get_jwt_identity()
+    if user.get("role") == StaffRole.AirlineStaff.value:
+        bags = system.get_bags(bag_id=bag_id)
+        if not bags:
+            return jsonify({"error": f"Bag {bag_id} not found"}), 404
+        if bags[0].airline_code != user.get("airline_code"):
+            return jsonify({"error": "Cannot remove bags from a different airline"}), 403
+
     try:
         system.remove_bag(bag_id)
     except ValueError as e:
@@ -103,5 +112,15 @@ def remove_bag(bag_id):
 def remove_bags_by_passenger(ticket_number):
     """Removes all bags for a passenger. Used as part of the security violation flow."""
     system = get_airport_system()
+
+    user = get_jwt_identity()
+    if user.get("role") == StaffRole.AirlineStaff.value:
+        try:
+            passenger = system.get_passenger(ticket_number)
+        except ValueError as e:
+            return jsonify({"error": str(e)}), 404
+        if passenger.airline_code != user.get("airline_code"):
+            return jsonify({"error": "Cannot remove bags from a different airline"}), 403
+
     system.remove_bags_by_passenger(ticket_number)
     return jsonify({"message": f"All bags for passenger {ticket_number} removed"}), 200
