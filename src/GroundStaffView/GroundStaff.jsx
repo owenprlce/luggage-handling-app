@@ -33,7 +33,7 @@ export default function GroundStaff({ user }) {
 
     return (
         <>
-            <div className="relative w-full min-h-screen bg-orange-50 overflow-y-auto">
+            <div className="w-full h-full bg-orange-50">
                 <ComponentFooter title={"Ground Staff Dashboard"} />
                 {
                     !selectedFlight && locationToWork === "gate" &&
@@ -52,16 +52,16 @@ export default function GroundStaff({ user }) {
 
 function SelectWorkLocation({ setLocationToWork }) {
     return (
-        <div className="w-full min-h-screen flex justify-center items-center bg-orange-50 px-4 py-32">
-            <div className="w-full max-w-4xl flex flex-col justify-center items-center gap-8">
+        <div className="w-full h-full flex justify-center items-center bg-orange-50">
+            <div className="w-2/3 min-h-1/12 flex flex-col justify-center items-center gap-8">
                 <h2 className="text-5xl text-emerald-950 text-center mb-8">
                     Select Work Location
                 </h2>
 
-                <div className="w-full max-w-xl flex flex-col gap-8">
+                <div className="w-6/12 h-full flex flex-col gap-8">
                     <div
                         onClick={() => setLocationToWork("gate")}
-                        className="cursor-pointer p-16 bg-emerald-800 border-2 border-emerald-950 rounded-2xl flex flex-row items-center justify-between hover:scale-105 transition-transform duration-300"
+                        className="cursor-pointer h-1/2 p-16 bg-emerald-800 border-2 border-emerald-950 rounded-2xl flex flex-row items-center justify-between hover:scale-105 transition-transform duration-300"
                     >
                         <svg className="fill-white" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 256 256"><path d="M224,216a8,8,0,0,1-8,8H72a8,8,0,1,1,0-16H216A8,8,0,0,1,224,216Zm24-80v24a8,8,0,0,1-8,8H61.07a39.75,39.75,0,0,1-38.31-28.51L8.69,92.6A16,16,0,0,1,24,72h8a8,8,0,0,1,5.65,2.34L59.32,96H81.81l-9-26.94A16,16,0,0,1,88,48h8a8,8,0,0,1,5.66,2.34L147.32,96H208A40,40,0,0,1,248,136Zm-16,0a24,24,0,0,0-24-24H144a8,8,0,0,1-5.65-2.34L92.69,64H88l12.49,37.47A8,8,0,0,1,92.91,112H56a8,8,0,0,1-5.66-2.34L28.69,88H24l14.07,46.9a23.85,23.85,0,0,0,23,17.1H232Z"></path></svg>
                         <h1 className="text-white">Airport Gates</h1>
@@ -69,7 +69,7 @@ function SelectWorkLocation({ setLocationToWork }) {
 
                     <div
                         onClick={() => setLocationToWork("security-check")}
-                        className="cursor-pointer p-16 bg-emerald-800 border-2 border-emerald-950 rounded-2xl flex flex-row items-center justify-between hover:scale-105 transition-transform duration-300"
+                        className="cursor-pointer h-1/2 p-16 bg-emerald-800 border-2 border-emerald-950 rounded-2xl flex flex-row items-center justify-between hover:scale-105 transition-transform duration-300"
                     >
                         <svg className="fill-white" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 256 256"><path d="M224,64H32A16,16,0,0,0,16,80v72a16,16,0,0,0,16,16H56v32a8,8,0,0,0,16,0V168H184v32a8,8,0,0,0,16,0V168h24a16,16,0,0,0,16-16V80A16,16,0,0,0,224,64Zm0,64.69L175.31,80H224ZM80.69,80l72,72H103.31L32,80.69V80ZM32,103.31,80.69,152H32ZM224,152H175.31l-72-72h49.38L224,151.32V152Z"></path></svg>
                         <h1 className="text-white">Security Clearance</h1>
@@ -83,8 +83,8 @@ function SelectWorkLocation({ setLocationToWork }) {
 function GateLocation({ selectedFlight, setSelectedFlight }) {
 
     return (
-        <div className="w-full min-h-screen flex justify-center items-center px-4 py-28">
-            <div className="w-full min-h-[70vh] overflow-auto">
+        <div className="w-full h-full flex justify-center items-center">
+            <div className="w-full h-9/12">
                 <FlightsList selectedFlight={selectedFlight} setSelectedFlight={setSelectedFlight} />
             </div>
         </div>
@@ -186,12 +186,12 @@ function SecurityCheckpoint() {
     };
 
     return (
-        <div className="w-full min-h-screen flex justify-center items-center px-4 py-32">
-            <div className={`fixed top-32 right-4 z-40 h-24 w-[min(24rem,calc(100vw-2rem))] transition-all ease-in-out ${errorMessageState ? 'duration-300 translate-x-0 opacity-100' : 'duration-300 translate-x-full opacity-0'}`}>
+        <div className="w-full h-full flex justify-center items-center">
+            <div className={`absolute top-36 right-8 z-40 h-24 w-[min(24rem,calc(100vw-2rem))] transition-all ease-in-out ${errorMessageState ? 'duration-300 translate-x-0 opacity-100' : 'duration-300 translate-x-full opacity-0'}`}>
                 <Alert error={errorMessage} />
             </div>
 
-            <div className="w-full max-w-7xl min-h-[65vh] flex flex-col gap-8">
+            <div className="w-10/12 h-8/12 flex flex-col gap-8 overflow-hidden">
 
                 <div className="flex-1 bg-emerald-800 rounded-2xl p-6 border-2 border-emerald-950 overflow-hidden flex flex-col">
                     <div className="flex items-center justify-between mb-8">

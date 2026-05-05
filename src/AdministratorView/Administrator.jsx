@@ -87,7 +87,7 @@ export default function Administrator() {
                     <div className="w-full max-w-5xl grid grid-cols-1 sm:grid-cols-2 gap-6 text-3xl md:text-5xl pb-28">
                         {Object.entries(adminOptions).map(([option, data]) => (
                             <div
-                                className="w-full min-h-40 relative bg-emerald-800 flex justify-center items-center rounded-3xl cursor-pointer text-white shadow-2xl"
+                                className="w-full min-h-52 relative bg-emerald-800 flex justify-center items-center rounded-3xl cursor-pointer text-white shadow-2xl"
                                 key={option}
                                 onMouseEnter={() => setHoveredOption(option)}
                                 onMouseLeave={() => setHoveredOption(null)}>
@@ -115,7 +115,7 @@ function AdminOptions({ options, onSelect }) {
     return (
         <div className="p-4 absolute w-full h-full inset-0 rounded-3xl flex flex-col gap-4 justify-center items-center text-lg md:text-2xl">
             {options.map((option) => (
-                <div className="w-full min-h-16 px-6 py-2 bg-orange-50 hover:bg-orange-100 transition text-black rounded-xl flex justify-center items-center text-xl md:text-3xl text-center" key={option.view} onClick={() => onSelect(option.view)}>
+                <div className="w-full h-full px-6 py-2 bg-orange-50 hover:bg-orange-100 transition text-black rounded-xl flex justify-center items-center text-xl md:text-3xl text-center" key={option.view} onClick={() => onSelect(option.view)}>
                     {option.name}
                 </div>
             ))}

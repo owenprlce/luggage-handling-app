@@ -146,7 +146,7 @@ export default function CheckIn() {
             >
                 <button
                     type="submit"
-                    className={`cursor-pointer hover:scale-105 static mt-2 rounded-full bg-emerald-800 border-2 border-emerald-950 size-24 sm:size-28 gap-y-4 text-white transition-all duration-500 flex flex-col justify-center items-center
+                    className={`cursor-pointer hover:scale-105 absolute bottom-0 -right-[120px] mt-2 rounded-full bg-emerald-800 border-2 border-emerald-950 size-24 sm:size-28 gap-y-4 text-white transition-all duration-500 flex flex-col justify-center items-center
                             ${validForm ? '' : 'ease-in opacity-0 pointer-events-none'}`}
                 >
                     <svg

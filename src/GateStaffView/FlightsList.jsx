@@ -11,11 +11,11 @@ function FlightsList({ airline, selectedFlight, setSelectedFlight }) {
     const flightsToDisplay = flights.filter(a => a.airlineCode === airline)
 
     return (
-        <div className="w-full min-h-full flex flex-col justify-start items-center gap-12">
+        <div className="w-full h-full flex flex-col justify-start items-center gap-12">
 
             {/* Flight List */}
             {!selectedFlight && (
-                <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div className="w-9/12 grid grid-cols-3 gap-6">
                     {flightsToDisplay.map((flight) => (
                         <div
                             key={flight.flightId}
@@ -40,7 +40,7 @@ function FlightsList({ airline, selectedFlight, setSelectedFlight }) {
 
             {/* Passengers */}
             {selectedFlight && (
-                <div className="w-full min-h-screen flex justify-center items-center">
+                <div className="w-full h-full flex justify-center items-center">
 
                     <div onClick={() => setSelectedFlight(null)} className="z-40 rounded-[50px] fixed top-4 left-4 bg-emerald-800 border-2 border-emerald-700 cursor-pointer">
                         <div className="h-20 w-20 flex justify-center items-center">
@@ -182,8 +182,8 @@ function FlightPassengersTable({ flight, onBack }) {
     return (
         <>
 
-            <div className="w-full min-h-screen flex justify-center items-center px-4 py-28">{flightPassengers.length < 1 ? (
-                <div className="w-full min-h-screen flex justify-center items-center bg-orange-50 px-4">
+            <div className="w-full h-full flex justify-center items-center">{flightPassengers.length < 1 ? (
+                <div className="w-full h-full flex justify-center items-center bg-orange-50">
                     <p className="text-4xl md:text-6xl text-emerald-950 text-center">No passengers registered</p>
                 </div>
             ) : (
@@ -195,8 +195,8 @@ function FlightPassengersTable({ flight, onBack }) {
                     </div>
 
                     {/* Header */}
-                    <div className="w-full max-w-6xl flex flex-wrap items-center justify-between gap-4">
-                        <div className="flex flex-wrap items-center justify-start gap-4">
+                    <div className="w-full max-w-6xl flex flex-row items-center justify-between gap-4">
+                        <div className="flex flex-row items-center justify-start gap-4">
                             <h2 className="text-3xl text-emerald-950 font-semibold">
                                 Flight {flight.airlineCode}{flight.flightNumber}
                             </h2>

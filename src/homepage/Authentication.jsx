@@ -14,11 +14,11 @@ export default function Authentication({ setUserInformation, setRole }) {
 
     return (
         <>
-            <div className="fixed inset-0 flex flex-col lg:flex-row overflow-y-auto bg-emerald-950">
-                <div className="h-44 sm:h-56 lg:h-full lg:w-5/12 xl:w-1/2 flex-shrink-0 shadow-xl/30">
+            <div className="fixed w-full h-full flex flex-row">
+                <div className="h-full w-auto shadow-xl/30">
                     <img className="w-full h-full object-cover lg:object-scale-down" src={`${import.meta.env.BASE_URL}luggage.jpg`} alt="" />
                 </div>
-                <div className="relative min-h-[calc(100vh-11rem)] sm:min-h-[calc(100vh-14rem)] lg:min-h-screen flex-1 bg-emerald-950 flex justify-center items-center overflow-hidden inset-shadow-sm px-4 py-8">
+                <div className="relative h-full flex-1 bg-emerald-950 flex justify-center items-center overflow-hidden inset-shadow-sm">
                     {
                         view ? (
                             <AuthenticationPanel
@@ -98,7 +98,7 @@ function AuthenticationPanel({ setUserInformation, setRole, setView, setPendingU
                     <h2 className="text-4xl lg:text-5xl text-center text-black">Airport Luggage Handler</h2>
                 </div>
 
-                <div className="w-10/12 flex flex-col gap-y-4">
+                <div className="mt-10 w-10/12 flex flex-col gap-y-4">
                     <label className="text-2xl text-black" htmlFor="username">Username</label>
                     <input onChange={(e) => setUsername(e.target.value)} className="w-full h-16 border-2 border-orange-900 bg-zinc-50 rounded-xl text-2xl px-4" type="username" value={username} />
                 </div>
@@ -108,7 +108,7 @@ function AuthenticationPanel({ setUserInformation, setRole, setView, setPendingU
                     <input onChange={(e) => setPassword(e.target.value)} className="w-full h-16 border-2 border-orange-900 bg-zinc-50 rounded-xl text-2xl px-4" type="password" value={password} />
                 </div>
 
-                <div className="w-10/12 flex flex-row gap-x-4 text-black">
+                <div className="mt-12 w-10/12 flex flex-row gap-x-4 text-black">
                     <div onClick={login} className="w-full h-16 flex justify-center items-center border-2 border-orange-900 bg-zinc-50 rounded-xl hover:cursor-pointer">Login</div>
                 </div>
             </div>
@@ -144,7 +144,7 @@ export function ChangePasswordPanel({ setView, pendingUser, setUserInformation, 
     function changePassword() {
         if (!oldPassword || !newPassword || !confirmNewPassword) {
             setErrorMessageState(true)
-            setErrorMessage("All fields are require!")
+            setErrorMessage("All fields are required!")
             return;
         }
 
@@ -212,7 +212,7 @@ export function ChangePasswordPanel({ setView, pendingUser, setUserInformation, 
                     <h2 className="text-4xl lg:text-5xl text-center text-black">Change Password</h2>
                 </div>
 
-                <div className="w-10/12 flex flex-col gap-y-4">
+                <div className="mt-10 w-10/12 flex flex-col gap-y-4">
                     <label className="text-2xl text-black" htmlFor="old-password">Original Password</label>
                     <input onChange={(e) => setOldPassword(e.target.value)} className="w-full h-16 border-2 border-orange-900 bg-zinc-50 rounded-xl text-2xl px-4" type="password" value={oldPassword} />
                 </div>
@@ -227,7 +227,7 @@ export function ChangePasswordPanel({ setView, pendingUser, setUserInformation, 
                     <input onChange={(e) => setConfirmNewPassword(e.target.value)} className="w-full h-16 border-2 border-orange-900 bg-zinc-50 rounded-xl text-2xl px-4" type="password" value={confirmNewPassword} />
                 </div>
 
-                <div className="w-10/12 flex flex-row gap-x-4 text-black">
+                <div className="mt-10 w-10/12 flex flex-row gap-x-4 text-black">
                     <div onClick={() => changePassword()} className="w-full h-16 flex justify-center items-center border-2 border-orange-900 bg-zinc-50 rounded-xl hover:cursor-pointer">Change Password</div>
                 </div>
             </div>

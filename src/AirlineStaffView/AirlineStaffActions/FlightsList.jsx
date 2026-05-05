@@ -11,11 +11,11 @@ function FlightsList({ airline, selectedFlight, setSelectedFlight }) {
     const flightsToDisplay = flights.filter(a => a.airlineCode === airline)
 
     return (
-        <div className="w-full min-h-full flex flex-col justify-start items-center gap-12">
+        <div className="w-full h-full flex flex-col justify-start items-center gap-12">
 
             {/* Flight List */}
             {!selectedFlight && (
-                <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div className="w-9/12 grid grid-cols-3 gap-6">
                     {flightsToDisplay.map((flight) => (
                         <div
                             key={flight.flightId}
@@ -40,7 +40,7 @@ function FlightsList({ airline, selectedFlight, setSelectedFlight }) {
 
             {/* Passengers */}
             {selectedFlight && (
-                <div className="w-full min-h-screen flex justify-center items-center">
+                <div className="w-full h-full flex justify-center items-center">
 
                     <div onClick={() => setSelectedFlight(null)} className="z-40 rounded-[50px] fixed top-4 left-4 bg-emerald-800 border-2 border-emerald-700 cursor-pointer">
                         <div className="h-20 w-20 flex justify-center items-center">
@@ -175,20 +175,20 @@ function FlightPassengersTable({ flight, onBack }) {
     return (
         <>
 
-            <div className="w-full min-h-screen flex justify-center items-center px-4 py-28">{flightPassengers.length < 1 ? (
-                <div className="w-full min-h-screen flex justify-center items-center bg-orange-50 px-4">
+            <div className="w-full h-full flex justify-center items-center">{flightPassengers.length < 1 ? (
+                <div className="w-full h-full flex justify-center items-center">
                     <p className="text-4xl md:text-6xl text-emerald-950 text-center">No passengers registered</p>
                 </div>
             ) : (
 
                 <div className="w-full p-4 flex flex-col items-center gap-y-16">
 
-                    <div className={`fixed top-32 right-4 z-40 h-24 w-[min(24rem,calc(100vw-2rem))] transition-all ease-in-out ${errorMessageState ? 'duration-300 translate-x-0 opacity-100' : 'duration-300 translate-x-full opacity-0'}`}>
+                    <div className={`absolute top-36 right-8 h-24 w-96 transition-all ease-in-out ${errorMessageState ? 'duration-300 translate-x-0 opacity-100' : 'duration-300 translate-x-full opacity-0'}`}>
                         <Alert error={errorMessage} />
                     </div>
 
                     {/* Header */}
-                    <div className="w-full max-w-6xl flex flex-wrap items-center justify-start gap-4">
+                    <div className="w-9/12 flex flex-row items-center justify-start gap-4">
                         <h2 className="text-3xl text-emerald-950 font-semibold">
                             Flight {flight.airlineCode}{flight.flightNumber}
                         </h2>
@@ -207,8 +207,8 @@ function FlightPassengersTable({ flight, onBack }) {
                     </div>
 
                     {/* Passenger Table */}
-                    <div className="w-full max-w-6xl max-h-[65vh] overflow-x-auto overflow-y-auto">
-                        <table className="min-w-[900px] w-full table-fixed border-collapse text-emerald-950">
+                    <div className="w-9/12 max-h-[60vh] overflow-y-auto">
+                        <table className="w-full table-fixed border-collapse text-emerald-950">
                             <thead>
                                 <tr>
                                     <th className="p-4">First Name</th>

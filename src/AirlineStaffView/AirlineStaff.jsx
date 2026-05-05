@@ -27,7 +27,7 @@ export default function AirlineStaff({ user }) {
 
     return (
         <>
-            <div className="relative w-full min-h-screen bg-orange-50 overflow-y-auto">
+            <div className="relative w-full h-full bg-orange-50">
                 <ComponentFooter title={"Airline Staff Dashboard"} />
                 {
                     !selectedFlight &&
@@ -47,8 +47,8 @@ export default function AirlineStaff({ user }) {
 function FlightInformation({ airline, selectedFlight, setSelectedFlight }) {
 
     return (
-        <div className="w-full min-h-screen flex justify-center items-center px-4 py-28">
-            <div className="w-full min-h-[70vh] overflow-auto">
+        <div className="w-full h-full flex justify-center items-center">
+            <div className="w-full h-9/12 overflow-scroll">
                 <FlightsList airline={airline} selectedFlight={selectedFlight} setSelectedFlight={setSelectedFlight} />
             </div>
         </div>
