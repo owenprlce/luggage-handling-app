@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 
 import { useData } from "../GlobalData/ApplicationData"
-import { fetchInitialDemoData, loginStaff } from "../api/backend"
+import { changePassword as changePasswordAPI, fetchInitialDemoData, loginStaff } from "../api/backend"
 
 import { passwordRegex } from "../RegexValidation/form-validation"
 
@@ -120,7 +120,7 @@ function AuthenticationPanel({ setUserInformation, setRole, setView, setPendingU
 
 export function ChangePasswordPanel({ setView, pendingUser, setUserInformation, setRole, isLoggedIn = false }) {
 
-    const { setCurrentUser, setStaff } = useData()
+    const { authToken, setCurrentUser, setStaff } = useData()
 
     const [oldPassword, setOldPassword] = useState("")
     const [newPassword, setNewPassword] = useState("")
@@ -141,16 +141,10 @@ export function ChangePasswordPanel({ setView, pendingUser, setUserInformation, 
     }, [errorMessageState])
 
 
-    function changePassword() {
+    async function changePassword() {
         if (!oldPassword || !newPassword || !confirmNewPassword) {
             setErrorMessageState(true)
             setErrorMessage("All fields are required!")
-            return;
-        }
-
-        if (oldPassword !== pendingUser.password) {
-            setErrorMessageState(true)
-            setErrorMessage("Current password does not match original!")
             return;
         }
 
@@ -172,19 +166,31 @@ export function ChangePasswordPanel({ setView, pendingUser, setUserInformation, 
             return;
         }
 
-        setStaff(staff => staff.map(s => s.username === pendingUser.username ? { ...s, password: newPassword, changedPassword: true } : s));
+        if (!authToken) {
+            setErrorMessageState(true)
+            setErrorMessage("You must be logged in to change your password.")
+            return;
+        }
 
-        pendingUser.password = newPassword
-        pendingUser.changedPassword = true
+        try {
+            await changePasswordAPI(authToken, oldPassword, newPassword)
+        } catch (error) {
+            setErrorMessageState(true)
+            setErrorMessage(error.message || "Failed to change password.")
+            return;
+        }
+
+        const updatedUser = { ...pendingUser, changedPassword: true }
+        setStaff(staff => staff.map(s => s.username === pendingUser.username ? { ...s, changedPassword: true } : s));
+        setCurrentUser(updatedUser)
+        setUserInformation(updatedUser)
 
         if (isLoggedIn) {
             setView(false);
             return;
         }
 
-        setRole(pendingUser.type)
-        setCurrentUser(pendingUser)
-        setUserInformation(pendingUser)
+        setRole(updatedUser.type)
     }
 
 
