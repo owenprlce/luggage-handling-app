@@ -43,7 +43,7 @@ export default function Authentication({ setUserInformation, setRole }) {
 
 function AuthenticationPanel({ setUserInformation, setRole, setView, setPendingUser }) {
 
-    const { setCurrentUser, setAuthToken, setFlights, setPassengers, setBags } = useData()
+    const { setCurrentUser, setAuthToken, setFlights, setPassengers, setBags, setStaff } = useData()
 
     const [username, setUsername] = useState("")
     const [password, setPassword] = useState("")
