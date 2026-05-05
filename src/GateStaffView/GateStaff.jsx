@@ -72,6 +72,7 @@ function FlightInformation({ airline, selectedFlight, setSelectedFlight }) {
             showError("No flight selected")
             return
         }
+
         setIsChecking(true)
         try {
             const status = await checkDepartureReadiness(authToken, selectedFlight.flightId)
@@ -124,7 +125,7 @@ function FlightInformation({ airline, selectedFlight, setSelectedFlight }) {
 
             {/* Departure readiness panel — only shown when a flight is selected */}
             {selectedFlight && (
-                <div className="w-full max-w-2xl bg-emerald-800 border-2 border-emerald-950 rounded-2xl p-6 flex flex-col gap-4 mb-8">
+                <div className="w-full max-w-2xl absolute bottom-0 bg-emerald-800 border-2 border-emerald-950 rounded-2xl p-6 flex flex-col gap-4 mb-8">
                     <h3 className="text-2xl text-white font-bold">
                         Departure — {selectedFlight.flightId}
                     </h3>
@@ -191,7 +192,15 @@ function FlightInformation({ airline, selectedFlight, setSelectedFlight }) {
                                     ✓ Admin has been notified
                                 </p>
                             )}
+                            
+                            <button
+                                onClick={() => setDepartureStatus(null)}
+                                className="w-full h-14 bg-gray-100 border-2 border-emerald-950 rounded-xl text-emerald-950 text-xl font-semibold hover:scale-105 transition-transform duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Close
+                            </button>
                         </div>
+
                     )}
                 </div>
             )}

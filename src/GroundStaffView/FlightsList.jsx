@@ -13,7 +13,7 @@ function FlightsList({ selectedFlight, setSelectedFlight }) {
         <div className="w-full h-full flex flex-col justify-start items-center gap-12">
 
             {!selectedFlight && (
-                <div className="w-9/12 grid grid-cols-3 gap-6">
+                <div className="w-9/12 grid grid-cols-3 gap-6 overflow-y-scroll">
                     {flights.map((flight) => (
                         <div
                             key={flight.flightId}
@@ -105,7 +105,7 @@ function FlightPassengersTable({ flight, onBack }) {
                         <Alert error={errorMessage} />
                     </div>
 
-                    <div className="w-9/12 flex flex-row items-center justify-between gap-4">
+                    <div className="w-9/12 flex flex-row items-center justify-start gap-4">
                         <div className="flex flex-row items-center justify-start gap-4">
                             <h2 className="text-3xl text-emerald-950 font-semibold">
                                 Flight {flight.airlineCode}{flight.flightNumber}

@@ -208,7 +208,7 @@ function FlightPassengersTable({ flight, onBack }) {
                             <Alert error={errorMessage} />
                         </div>
 
-                        <div className="w-full max-w-6xl flex flex-row items-center justify-between gap-4">
+                        <div className="w-9/12 flex flex-row items-center justify-start gap-4">
                             <div className="flex flex-row items-center justify-start gap-4">
                                 <h2 className="text-3xl text-emerald-950 font-semibold">
                                     Flight {flight.airlineCode}{flight.flightNumber}
@@ -225,11 +225,11 @@ function FlightPassengersTable({ flight, onBack }) {
                             <div className="flex justify-end">
                                 {canAlertAdmin && (
                                     <div className="flex flex-row">
-                                        <button
+                                        {/* <button
                                             className={`${alerted.includes(flight.flightId) ? 'opacity-0' : ''} text-3xl text-red-600 font-semibold cursor-pointer`}
                                             onClick={() => alertAdmin(flight)}>
                                             Alert Admin
-                                        </button>
+                                        </button> */}
                                         <div>
                                             {alerted.includes(flight.flightId) &&
                                                 (<svg className="fill-emerald-950" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 256 256"><path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"></path></svg>)
@@ -240,8 +240,8 @@ function FlightPassengersTable({ flight, onBack }) {
                             </div>
                         </div>
 
-                        <div className="w-full max-w-6xl max-h-[65vh] overflow-x-auto overflow-y-auto">
-                            <table className="min-w-[800px] w-full table-fixed border-collapse text-emerald-950">
+                        <div className="w-9/12 min-h-[60vh] overflow-y-auto">
+                            <table className="w-full table-fixed border-collapse text-emerald-950">
                                 <thead>
                                     <tr>
                                         <th className="p-4">First Name</th>
