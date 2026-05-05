@@ -6,8 +6,15 @@ import ComponentFooter from "../../ReusableComponents/ComponentFooter"
 import Alert from "../../ReusableComponents/Alert"
 import { useData } from "../../GlobalData/ApplicationData"
 
+import { addStaff as addStaffAPI } from "../../api/backend"
 
 import { nameRegex, emailRegex, phoneNumberRegex } from "../../RegexValidation/form-validation"
+
+const ROLE_MAP = {
+    "ground-staff":  "Ground Staff",
+    "airline-staff": "Airline Staff",
+    "gate-staff":    "Gate Staff",
+}
 
 export default function AddStaff() {
     const [type, setType] = useState("ground-staff")
@@ -16,6 +23,7 @@ export default function AddStaff() {
     const [email, setEmail] = useState("")
     const [phoneNumber, setPhoneNumber] = useState("")
     const [airline, setAirline] = useState("")
+    const [isLoading, setIsLoading] = useState(false)
 
 
     const [validForm, setValidForm] = useState(false);
@@ -24,7 +32,7 @@ export default function AddStaff() {
     const [validEmail, setValidEmail] = useState(false);
     const [validPhoneNumber, setValidPhoneNumber] = useState(false);
 
-    const { staff, setStaff } = useData()
+    const { staff, setStaff, authToken } = useData()
 
     // Temporary error message to display
     const [errorMessage, setErrorMessage] = useState("")
@@ -69,71 +77,58 @@ export default function AddStaff() {
         }
     }, [firstName, lastName, email, phoneNumber, airline, type])
 
-    const addStaff = (e) => {
+    const addNewStaff = async (e) => {
         e.preventDefault()
-
-        // We will not worry about existing email for sake of demo purposes (To recieve emails of user credentials)
-
-        // const existingEmail = staff.some(s => s.email === email);
-        const existingPhoneNumber = staff.some(s => s.phoneNumber === phoneNumber);
-
-        // if (existingEmail) {
-        //     setErrorMessage(`Staff (Email: ${email}): already exists!`)
-        //     setErrorMessageState(true)
-        //     return;
-        // }
-
-        if (existingPhoneNumber) {
-            setErrorMessage(`Staff (Phone: ${phoneNumber}): already exists!`)
-            setErrorMessageState(true)
-            return;
-        }
-
-        let generatedUsername = null
-        let checkUsername = false
-
-        const generatedPassword = generatePassword()
-
-        do {
-
-            generatedUsername = generateUsername()
-            checkUsername = staff.some(s => s.username === generatedUsername)
-
-        } while (checkUsername)
-
-        const newStaff = {
-            type: type,
-            firstName: firstName,
-            lastName: lastName,
-            emailAddress: email,
-            phoneNumber: phoneNumber,
-            username: generatedUsername,
-            password: generatedPassword,
-            changedPassword: false
-        }
-
-        if (type !== "ground-staff") {
-            newStaff.airline = airline;
-        }
-
-        console.log("Created new staff", newStaff)
-
-        setStaff(prev => [...prev, newStaff])
-
-        sendCredentialsToEmail(firstName, lastName, email, generatedUsername, generatedPassword)
-            .then(() => {
-                console.log("SENT!");
+        if (isLoading) return
+        setIsLoading(true)
+    
+        let result = null   // declared outside so both blocks can access it
+    
+        try {
+            result = await addStaffAPI(authToken, {
+                firstName,
+                lastName,
+                email,
+                phone:       phoneNumber,
+                role:        ROLE_MAP[type],
+                airlineCode: (type === "airline-staff" || type === "gate-staff") ? airline : undefined,
             })
-            .catch((error) => {
-                console.error("COULD NOT SEND", error);
-            }) 
-
-        setFirstName("")
-        setLastName("")
-        setEmail("")
-        setPhoneNumber("")
-        setAirline("")
-        setType("ground-staff")
+    
+            setStaff(prev => [...prev, {
+                type,
+                firstName,
+                lastName,
+                emailAddress: email,
+                phoneNumber,
+                username:        result.username,
+                password:        result.temporary_password,
+                changedPassword: false,
+                ...(type !== "ground-staff" && { airline }),
+            }])
+    
+            setErrorMessage(`Staff member ${firstName} ${lastName} added! Credentials sent to ${email}.`)
+            setErrorMessageState(true)
+    
+            setFirstName(""); setLastName(""); setEmail("")
+            setPhoneNumber(""); setAirline(""); setType("ground-staff")
+    
+        } catch (err) {
+            setErrorMessage(err.message || "Failed to add staff member.")
+            setErrorMessageState(true)
+        } finally {
+            setIsLoading(false)
+        }
+    
+        // Only attempt email if the backend call succeeded
+        if (result) {
+            try {
+                await sendCredentialsToEmail(firstName, lastName, email,
+                    result.username, result.temporary_password)
+                console.log("Credentials emailed successfully")
+            } catch (emailError) {
+                console.error("Could not send email:", emailError)
+            }
+        }
     }
 
     // Since our applicaiton has not been deployed, I am not able to use process.env to acces the credentials, so it will be hardcoded on my end for now
@@ -208,7 +203,7 @@ export default function AddStaff() {
             </div>
 
             <form
-                onSubmit={addStaff}
+                onSubmit={addNewStaff}
                 className="p-8 sm:p-12 relative w-full max-w-xl bg-emerald-800 outline-2 outline-emerald-950 rounded-3xl flex flex-col justify-center items-center gap-6 sm:gap-8"
             >
 
