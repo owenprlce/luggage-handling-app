@@ -75,15 +75,19 @@ function mapBag(bag) {
 }
 
 function mapStaff(staff) {
+    const airlineCode = staff.airline_code || "";
     return {
         username: staff.username,
         firstName: staff.firstname,
         lastName: staff.lastname,
         email: staff.email,
+        emailAddress: staff.email,
         phone: staff.phone,
+        phoneNumber: staff.phone,
         role: staff.role,
         type: roleToFrontend(staff.role),
-        airlineCode: staff.airline_code || "",
+        airlineCode,
+        airline: airlineCode,
     };
 }
 

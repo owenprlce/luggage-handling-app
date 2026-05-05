@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 
 import { useData } from "../GlobalData/ApplicationData";
+import { loadBag } from "../api/backend";
 
 import Alert from "../ReusableComponents/Alert";
 
@@ -77,7 +78,8 @@ function FlightPassengersTable({ flight, onBack }) {
     }, [errorMessageState])
 
     const flightPassengers = passengers.filter(p =>
-        flight.ticketNumbers.includes(p.ticketNumber)
+        String(p.flight) === String(flight.flightId) ||
+        flight.ticketNumbers.some(ticketNumber => String(ticketNumber) === String(p.ticketNumber))
     );
 
     const handleViewBags = (passenger) => {
@@ -174,30 +176,41 @@ function FlightPassengersTable({ flight, onBack }) {
 
 function PassengerBagsPopup({ passenger, flight, close }) {
 
-    const { passengers, bags, setBags } = useData();
+    const { passengers, bags, setBags, authToken } = useData();
+    const [errorMessage, setErrorMessage] = useState("")
 
     const passengerBags = bags.filter(
-        b => b.ticketNumber === passenger.ticketNumber
+        b => String(b.ticketNumber) === String(passenger.ticketNumber)
     );
 
     const gateLocation = `GATE-${flight.gateInformation.terminal}${flight.gateInformation.gateNumber}`;
-    const toLoad = `LOADED-${flight.airlineCode}${flight.flightNumber}`;
+    const backendGateLocation = `Gate - ${flight.gateInformation.terminal}${flight.gateInformation.gateNumber}`;
+    const toLoad = `Loaded - ${flight.flightId}`;
 
-    const handleBagLocationChange = (id, toLocation) => {
+    const handleBagLocationChange = async (id, toLocation) => {
         
         // Find passenger
-        const currentPassenger = passengers.find(p => p.ticketNumber === passenger.ticketNumber);
+        const currentPassenger = passengers.find(p => String(p.ticketNumber) === String(passenger.ticketNumber));
         
         // Cannot load luggage if passenger has not boarded
         if (!currentPassenger || currentPassenger.status !== "Boarded") {
+            setErrorMessage("Passenger must be boarded before luggage can be loaded.")
             return; 
         }
 
         const bag = bags.find(b => b.bagId === id);
         
         // Bag can only be loaded if at gate
-        if (bag && bag.location === gateLocation) {
+        if (bag && (bag.location === gateLocation || bag.location === backendGateLocation)) {
+            try {
+                await loadBag(authToken, id)
+            } catch (err) {
+                setErrorMessage(err.message || "Failed to load bag.")
+                return;
+            }
+
             setBags(bags => bags.map(b => b.bagId === id ? { ...b, location: toLocation } : b));
+            setErrorMessage("")
         }
     }
 
@@ -210,9 +223,14 @@ function PassengerBagsPopup({ passenger, flight, close }) {
                 </h2>
 
                 <div className={`my-8 max-h-96 flex flex-col gap-6 overflow-y-auto`}>
+                    {errorMessage && (
+                        <div className="p-3 bg-red-100 text-red-800 rounded-xl text-center">
+                            {errorMessage}
+                        </div>
+                    )}
                     {passengerBags.length > 0 ? (
                         passengerBags.map((bag, idx) => {
-                            const isAtGate = bag.location === gateLocation;
+                            const isAtGate = bag.location === gateLocation || bag.location === backendGateLocation;
                             const isBoarded = passenger.status === "Boarded";
                             const canLoad = isAtGate && isBoarded;
 
