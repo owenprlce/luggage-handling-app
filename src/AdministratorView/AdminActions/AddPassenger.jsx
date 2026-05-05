@@ -3,13 +3,12 @@ import { useState, useEffect } from "react"
 import ComponentFooter from "../../ReusableComponents/ComponentFooter"
 import Alert from "../../ReusableComponents/Alert"
 import { useData } from "../../GlobalData/ApplicationData"
+import { addPassenger } from "../../api/backend"
 import { nameRegex, identificationRegex, ticketNumberRegex, flightIdRegex } from "../../RegexValidation/form-validation"
-
-
 
 export default function AddPassenger() {
 
-    const { flights, setFlights, passengers, setPassengers } = useData()
+    const { flights, setFlights, passengers, setPassengers, authToken } = useData()
 
     // ***Backend Route (Add Flight) 
 
@@ -29,6 +28,7 @@ export default function AddPassenger() {
     // Temporary error message to display
     const [errorMessage, setErrorMessage] = useState("")
     const [errorMessageState, setErrorMessageState] = useState(false)
+    const [isLoading, setIsLoading] = useState(false)
 
     useEffect(() => {
 
@@ -80,54 +80,57 @@ export default function AddPassenger() {
         }
     }, [firstName, lastName, identification, ticketNumber, flightId])
 
-    function addPassenger(e) {
+    async function addNewPassenger(e) {
         e.preventDefault()
+        if (isLoading) return
+        setIsLoading(true)
 
-        const existingFlight = flights.some(f => f.flightId === flightId);
-        const existingPassengerTicketNumber = passengers.some(p => p.ticketNumber === Number(ticketNumber));
-        const existingPassengerIdentification = passengers.some(p => p.identification === identification);
+        // Look up the airline code from the flight — the backend requires it
+        const matchedFlight = flights.find(f => f.flightId === flightId)
 
-        if (!existingFlight) {
-            setErrorMessage(`Flight: ${flightId} does not exist`)
+        try {
+            await addPassenger(authToken, {
+                ticketNumber,
+                firstName,
+                lastName,
+                identification,
+                flightId,
+                airlineCode: matchedFlight.airlineCode,
+            })
+
+            // Backend confirmed — update local state
+            setPassengers(prev => [...prev, {
+                firstName,
+                lastName,
+                identification,
+                ticketNumber: Number(ticketNumber),
+                flight: flightId,
+                airlineCode: matchedFlight.airlineCode,
+                status: "Not-checked-in",
+                checkInIssue: false,
+                securityViolation: false,
+            }])
+
+            // Update the flight's ticket number list in local state
+            setFlights(prev => prev.map(f => f.flightId === flightId
+                ? { ...f, ticketNumbers: [...f.ticketNumbers, ticketNumber] }
+                : f
+            ))
+
+            setErrorMessage(`Passenger ${firstName} ${lastName} added successfully!`)
             setErrorMessageState(true)
-            return;
-        }
 
-        else if (existingPassengerTicketNumber) {
-            setErrorMessage(`Passenger (Ticket: ${ticketNumber}): already exists!`)
+            setFirstName(""); setLastName(""); setIdentification("")
+            setTicketNumber(""); setFlightId("")
+
+        } catch (err) {
+            // The backend error message tells the user exactly what went wrong:
+            // e.g. "Flight AA1000 not found" or "Passenger already has a ticket"
+            setErrorMessage(err.message || "Failed to add passenger.")
             setErrorMessageState(true)
-            return;
+        } finally {
+            setIsLoading(false)
         }
-
-        else if (existingPassengerIdentification) {
-            setErrorMessage(`Passenger (ID: ${identification}): already exists!`)
-            setErrorMessageState(true)
-            return;
-        }
-
-        const passengerToAdd = {
-            firstName: firstName,
-            lastName: lastName,
-            identification: identification,
-            ticketNumber: Number(ticketNumber),
-            flight: flightId,
-            status: "Not-checked-in",
-            bagIds: []
-        }
-
-        console.log("Passenger added successfully");
-
-        setPassengers(prev => [...prev, passengerToAdd])
-
-        setFlights(flight => flight.map(f => f.flightId === flightId ?
-            { ...f, ticketNumbers: [...f.ticketNumbers, Number(ticketNumber)] } : f));
-
-        setFirstName("");
-        setLastName("");
-        setIdentification("");
-        setTicketNumber("");
-        setFlightId("");
-
     }
 
     return (
@@ -141,7 +144,7 @@ export default function AddPassenger() {
                 <Alert error={errorMessage} />
             </div>
 
-            <form onSubmit={addPassenger} className="p-8 sm:p-12 relative w-full max-w-xl bg-emerald-800 outline-2 outline-emerald-950 rounded-3xl flex flex-col justify-center items-center gap-6 sm:gap-8">
+            <form onSubmit={addNewPassenger} className="p-8 sm:p-12 relative w-full max-w-xl bg-emerald-800 outline-2 outline-emerald-950 rounded-3xl flex flex-col justify-center items-center gap-6 sm:gap-8">
 
                 <button type="submit" className={`hover:scale-105 absolute bottom-0 -right-[120px] mt-2 rounded-full bg-emerald-800 border-2 border-emerald-950 size-24 sm:size-28 gap-y-4 text-white transition-all duration-500 flex flex-col justify-center items-center
                                         ${validForm ? '' : 'ease-in opacity-0 pointer-events-none'}`}>
