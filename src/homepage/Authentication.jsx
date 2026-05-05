@@ -72,7 +72,8 @@ function AuthenticationPanel({ setUserInformation, setRole, setView, setPendingU
 
         try {
             const session = await loginStaff(username, password)
-            const initialData = await fetchInitialDemoData(session.token)
+            console.log("role from backend:", session.user.type)
+            const initialData = await fetchInitialDemoData(session.token, session.user.type)
 
             setAuthToken(session.token)
             setFlights(initialData.flights)

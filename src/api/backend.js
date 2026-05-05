@@ -332,13 +332,13 @@ export async function confirmDeparture(token, flightId) {
     return apiRequest(`/departure/${flightId}/depart`, { method: "POST", token });
 }
 
-export async function fetchInitialDemoData(token) {
+export async function fetchInitialDemoData(token, role) {
     const flights = await fetchFlights(token);
     const passengers = await fetchPassengers(token);
     const bagGroups = await Promise.all(
         flights.map((flight) => fetchBagsByFlight(token, flight.flightId))
     );
-    const staff = await fetchStaff(token);
+    const staff = role === "Admin" ? await fetchStaff(token) : [];
 
     const bagsById = new Map();
     bagGroups.flat().forEach((bag) => bagsById.set(bag.bagId, bag));
