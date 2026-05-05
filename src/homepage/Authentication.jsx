@@ -78,6 +78,7 @@ function AuthenticationPanel({ setUserInformation, setRole, setView, setPendingU
             setFlights(initialData.flights)
             setPassengers(initialData.passengers)
             setBags(initialData.bags)
+            setStaff(initialData.staff)
             setRole(session.user.type)
             setCurrentUser(session.user)
             setUserInformation(session.user)

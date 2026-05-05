@@ -4,9 +4,11 @@ import RemovalPopup from "../../ReusableComponents/Reusable"
 import ComponentFooter from "../../ReusableComponents/ComponentFooter";
 import { useData } from "../../GlobalData/ApplicationData";
 
+import { removeStaff as removeStaffAPI } from "../../api/backend"
+
 export default function ViewStaff() {
 
-    const { staff, setStaff } = useData()
+    const { staff, setStaff, authToken } = useData()
 
     const staffToDisplay = staff.filter(s => s.type !== 'admin');
 
@@ -14,8 +16,16 @@ export default function ViewStaff() {
     const [deletionPopup, setDeletionPopup] = useState(false);
     const [staffToDelete, setStaffToDelete] = useState("");
 
-    const removeStaff = (username) => {
-        setStaff(prev => prev.filter(staff => staff.username !== username))
+    const removeStaff = async (username) => {
+        try {
+            await removeStaffAPI(authToken, username)
+
+            // Backend confirmed — update local state
+            setStaff(prev => prev.filter(s => s.username !== username))
+
+        } catch (err) {
+            alert(err.message || "Failed to remove staff member.")
+        }
     }
 
     return (

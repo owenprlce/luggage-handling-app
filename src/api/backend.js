@@ -338,6 +338,7 @@ export async function fetchInitialDemoData(token) {
     const bagGroups = await Promise.all(
         flights.map((flight) => fetchBagsByFlight(token, flight.flightId))
     );
+    const staff = await fetchStaff(token);
 
     const bagsById = new Map();
     bagGroups.flat().forEach((bag) => bagsById.set(bag.bagId, bag));
@@ -346,5 +347,6 @@ export async function fetchInitialDemoData(token) {
         flights,
         passengers,
         bags: Array.from(bagsById.values()),
+        staff,
     };
 }
