@@ -337,20 +337,27 @@ export async function confirmDeparture(token, flightId) {
 }
 
 export async function fetchInitialDemoData(token, role) {
-    const flights = await fetchFlights(token);
-    const passengers = await fetchPassengers(token);
+    const [flights, passengers] = await Promise.all([
+        fetchFlights(token),
+        fetchPassengers(token),
+    ])
+
     const bagGroups = await Promise.all(
         flights.map((flight) => fetchBagsByFlight(token, flight.flightId))
-    );
-    const staff = role === "Admin" ? await fetchStaff(token) : [];
+    )
+    const bagsById = new Map()
+    bagGroups.flat().forEach((bag) => bagsById.set(bag.bagId, bag))
 
-    const bagsById = new Map();
-    bagGroups.flat().forEach((bag) => bagsById.set(bag.bagId, bag));
+    // Only admins can fetch the full staff list
+    let staff = []
+    if (role === "admin") {
+        staff = await fetchStaff(token)
+    }
 
     return {
         flights,
         passengers,
         bags: Array.from(bagsById.values()),
         staff,
-    };
+    }
 }

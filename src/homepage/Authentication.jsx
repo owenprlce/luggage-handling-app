@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 
 import { useData } from "../GlobalData/ApplicationData"
-import { fetchInitialDemoData, loginStaff } from "../api/backend"
+import { fetchInitialDemoData, loginStaff, fetchStaffMember } from "../api/backend"
 
 import { passwordRegex } from "../RegexValidation/form-validation"
 
@@ -69,23 +69,46 @@ function AuthenticationPanel({ setUserInformation, setRole, setView, setPendingU
             setErrorMessageState(true);
             return;
         }
-
+    
         try {
-            const session = await loginStaff(username, password)
-            console.log("role from backend:", session.user.type)
-            const initialData = await fetchInitialDemoData(session.token, session.user.type)
-
-            setAuthToken(session.token)
-            setFlights(initialData.flights)
-            setPassengers(initialData.passengers)
-            setBags(initialData.bags)
-            setStaff(initialData.staff)
-            setRole(session.user.type)
-            setCurrentUser(session.user)
-            setUserInformation(session.user)
+            const session = await loginStaff(username, password);
+            console.log("role from backend:", session.user.type);
+    
+            // 🔥 NEW: enrich user with email + phone
+            let enrichedUser = session.user;
+    
+            if (session.user.type !== "admin") {
+                const staffDetails = await fetchStaffMember(
+                    session.token,
+                    session.user.username
+                );
+    
+                enrichedUser = {
+                    ...session.user,
+                    emailAddress: staffDetails.emailAddress,
+                    phoneNumber: staffDetails.phoneNumber,
+                };
+            }
+    
+            const initialData = await fetchInitialDemoData(
+                session.token,
+                session.user.type
+            );
+    
+            setAuthToken(session.token);
+            setFlights(initialData.flights);
+            setPassengers(initialData.passengers);
+            setBags(initialData.bags);
+            setStaff(initialData.staff);
+    
+            setRole(enrichedUser.type);
+            setCurrentUser(enrichedUser);
+    
+            setUserInformation(enrichedUser);
+    
         } catch (error) {
-            setErrorMessage(error.message || "Invalid login credentials")
-            setErrorMessageState(true)
+            setErrorMessage(error.message || "Invalid login credentials");
+            setErrorMessageState(true);
         }
     }
 

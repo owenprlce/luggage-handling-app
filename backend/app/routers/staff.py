@@ -24,9 +24,9 @@ def get_all_staff():
 
 
 @bp.get("/<username>")
-@role_required(StaffRole.Admin)
+@role_required(StaffRole.Admin, StaffRole.GroundStaff, StaffRole.AirlineStaff, StaffRole.GateStaff)
 def get_staff_member(username):
-    """Admin only: returns a single staff member's details."""
+    """Admin returns a single staff member's details, staff can view their own details."""
     system = get_airport_system()
     try:
         return jsonify(system.get_staff_member(username)), 200
