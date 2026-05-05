@@ -4,9 +4,11 @@ import { useData } from "../../GlobalData/ApplicationData";
 import RemovalPopup from "../../ReusableComponents/Reusable"
 import ComponentFooter from "../../ReusableComponents/ComponentFooter";
 
+import { removePassenger as removePassengerAPI } from "../../api/backend"
+
 export default function ViewPassengers() {
 
-    const { passengers, setPassengers, bags, setBags } = useData()
+    const { passengers, setPassengers, bags, setBags, authToken } = useData()
 
     // ***Backend Route (Fetch Flights) 
     const [deletionPopup, setDeletionPopup] = useState(false);
@@ -14,13 +16,17 @@ export default function ViewPassengers() {
 
     // Not necesarry to remove all passenger bags of passenger being deleted, since Airline Staff removes all bags upon security violation report
     // Doesn't hurt to keep this here
-    const removePassenger = (id) => {
-        const passengerBeingRemoved = passengers.find(p => p.identification === id)
+    const removePassenger = async (ticketNumber, identification) => {
+        try {
+            // Backend removes the passenger and cascades to their bags
+            await removePassengerAPI(authToken, ticketNumber)
 
-        setPassengers(prev => prev.filter(passenger => passenger.identification !== id))
+            // Backend confirmed — update local state
+            setPassengers(prev => prev.filter(p => p.identification !== identification))
+            setBags(prev => prev.filter(b => b.ticketNumber !== ticketNumber))
 
-        if(passengerBeingRemoved) {
-            setBags(bag => bag.filter(b => b.ticketNumber !== passengerBeingRemoved.ticketNumber))
+        } catch (err) {
+            alert(err.message || "Failed to remove passenger.")
         }
     }
 
@@ -40,7 +46,7 @@ export default function ViewPassengers() {
                         <RemovalPopup
                             toRemove={passengerToDelete}
                             confirm={() => {
-                                removePassenger(passengerToDelete.identification);
+                                removePassenger(passengerToDelete.ticketNumber, passengerToDelete.identification);
                                 setDeletionPopup(false);
                                 setPassengerToDelete("");
                             }}
