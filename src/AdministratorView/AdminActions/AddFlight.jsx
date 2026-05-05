@@ -136,8 +136,8 @@ export default function AddFlight() {
             setErrorMessage(`Flight ${flightId} to ${destination} added!`)
             setErrorMessageState(true)
     
-            // setAirlineCode(""); setFlightNumber(""); setTerminal("")
-            // setGateNumber("");  setAirlineName("");  setDestination("")
+            setAirlineCode(""); setFlightNumber(""); setTerminal("")
+            setGateNumber("");  setAirlineName("");  setDestination("")
     
         } catch (err) {
             // apiRequest throws an Error with the server's message baked in

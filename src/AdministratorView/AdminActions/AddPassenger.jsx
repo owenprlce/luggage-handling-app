@@ -88,6 +88,13 @@ export default function AddPassenger() {
         // Look up the airline code from the flight — the backend requires it
         const matchedFlight = flights.find(f => f.flightId === flightId)
 
+        if (!matchedFlight) {
+            setErrorMessage(`Flight ${flightId} not found.`)
+            setErrorMessageState(true)
+            setIsLoading(false)
+            return
+        }
+
         try {
             await addPassenger(authToken, {
                 ticketNumber,
