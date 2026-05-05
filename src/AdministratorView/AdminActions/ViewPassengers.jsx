@@ -1,10 +1,10 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 import { useData } from "../../GlobalData/ApplicationData";
 import RemovalPopup from "../../ReusableComponents/Reusable"
 import ComponentFooter from "../../ReusableComponents/ComponentFooter";
 
-import { removePassenger as removePassengerAPI } from "../../api/backend"
+import { removePassenger as removePassengerAPI, fetchPassengers } from "../../api/backend"
 
 export default function ViewPassengers() {
 
@@ -14,8 +14,26 @@ export default function ViewPassengers() {
     const [deletionPopup, setDeletionPopup] = useState(false);
     const [passengerToDelete, setPassengerToDelete] = useState("");
 
+    const [isLoading, setIsLoading] = useState(true)
+
     // Not necesarry to remove all passenger bags of passenger being deleted, since Airline Staff removes all bags upon security violation report
     // Doesn't hurt to keep this here
+    // Fetch fresh passengers from backend every time this view is opened
+    useEffect(() => {
+        async function refreshPassengers() {
+            setIsLoading(true)
+            try {
+                const fresh = await fetchPassengers(authToken)
+                setPassengers(fresh)
+            } catch (err) {
+                console.error("Failed to refresh passengers:", err)
+            } finally {
+                setIsLoading(false)
+            }
+        }
+        refreshPassengers()
+    }, [authToken])
+
     const removePassenger = async (ticketNumber, identification) => {
         try {
             // Backend removes the passenger and cascades to their bags
@@ -28,6 +46,15 @@ export default function ViewPassengers() {
         } catch (err) {
             alert(err.message || "Failed to remove passenger.")
         }
+    }
+
+    // Show loading state while fetching fresh data
+    if (isLoading) {
+        return (
+            <div className="w-full h-full flex justify-center items-center bg-orange-50 px-4 py-32">
+                <p className="text-4xl text-emerald-950">Loading passengers...</p>
+            </div>
+        )
     }
 
     return (

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 
 import { useData } from "../GlobalData/ApplicationData";
 import Alert from "../ReusableComponents/Alert";
-import { boardPassenger, postMessage } from "../api/backend";
+import { boardPassenger, postMessage, fetchPassengers } from "../api/backend";
 
 function FlightsList({ airline, selectedFlight, setSelectedFlight }) {
 
@@ -63,33 +63,39 @@ export default FlightsList;
 function FlightPassengersTable({ flight, onBack }) {
 
     const { passengers, setPassengers, bags, setBags, authToken, currentUser, alerted, setAlerted } = useData()
-    // setMessages removed — alertAdmin now posts to backend directly
+
+    const [isLoadingPassengers, setIsLoadingPassengers] = useState(true)
 
     const [errorMessage, setErrorMessage] = useState("")
     const [errorMessageState, setErrorMessageState] = useState(false)
-
-    useEffect(() => {
-        async function refreshPassengers() {
-            try {
-                const fresh = await fetchPassengers(authToken, flight.flightId)
-                // Merge fresh passengers into context — update existing ones
-                // and add any new ones, but don't remove passengers from other flights
-                setPassengers(prev => {
-                    const otherFlights = prev.filter(p => p.flight !== flight.flightId)
-                    return [...otherFlights, ...fresh]
-                })
-            } catch (err) {
-                console.error("Failed to refresh passengers:", err)
-            }
-        }
-        refreshPassengers()
-    }, [flight.flightId])   // re-runs whenever a different flight is selected
 
     useEffect(() => {
         const errorMessageState = setTimeout(() => { setErrorMessageState(false); }, 3000)
         const errorMessage = setTimeout(() => { setErrorMessage(""); }, 3500)
         return () => { clearTimeout(errorMessageState); clearTimeout(errorMessage) }
     }, [errorMessageState])
+
+    // Fetch fresh passengers from the backend whenever a flight is opened.
+    // This ensures gate staff always see up-to-date passenger data without
+    // needing to log out and back in.
+    useEffect(() => {
+        async function refreshPassengers() {
+            setIsLoadingPassengers(true)
+            try {
+                const fresh = await fetchPassengers(authToken, flight.flightId)
+                setPassengers(prev => {
+                    // Keep passengers from other flights, replace this flight's passengers
+                    const otherFlights = prev.filter(p => p.flight !== flight.flightId)
+                    return [...otherFlights, ...fresh]
+                })
+            } catch (err) {
+                console.error("Failed to refresh passengers:", err)
+            } finally {
+                setIsLoadingPassengers(false)
+            }
+        }
+        refreshPassengers()
+    }, [flight.flightId])
 
     const [selectedPassengerBags, setSelectedPassengerBags] = useState(null);
 
@@ -101,7 +107,7 @@ function FlightPassengersTable({ flight, onBack }) {
         flightPassengers.every(p => p.status === "Boarded");
 
     const allBagsLoaded = bags
-        .filter(b => flight.ticketNumbers.some(t => String(t) === String(b.ticketNumber)))
+        .filter(b => String(b.flightId) === String(flight.flightId))
         .every(b => b.location.startsWith("Loaded"));
 
     const canAlertAdmin = allPassengersBoarded && allBagsLoaded;
@@ -114,13 +120,11 @@ function FlightPassengersTable({ flight, onBack }) {
         setSelectedPassengerBags(null)
     }
 
-    // Gate staff: board a passenger after verifying their bags are at the gate
     const handleBoardPassenger = async (passenger) => {
         const passengerBags = bags.filter(b =>
             String(b.ticketNumber) === String(passenger.ticketNumber)
         );
 
-        // Check bags are at the gate before even calling the backend
         const gateLocation = `Gate - ${flight.gateInformation.terminal}${flight.gateInformation.gateNumber}`
         const bagsAtGate = passengerBags.every(b =>
             b.location === gateLocation || b.location === "Gate"
@@ -164,7 +168,6 @@ function FlightPassengersTable({ flight, onBack }) {
         );
     };
 
-    // Gate staff: notify admin that flight is ready for departure
     const alertAdmin = async (flightInformation) => {
         if (!canAlertAdmin) {
             setErrorMessage("Not all passengers boarded or bags loaded — flight cannot depart")
@@ -182,7 +185,6 @@ function FlightPassengersTable({ flight, onBack }) {
                 airlineCode:    flight.airlineCode,
             })
 
-            // Mark this flight as alerted in local state so the button disappears
             setAlerted(prev => [...prev, flightInformation.flightId])
 
             setErrorMessage(`Flight ${flightInformation.flightId}: Admin notified — clear for takeoff`)
@@ -192,6 +194,16 @@ function FlightPassengersTable({ flight, onBack }) {
             setErrorMessage(err.message || "Failed to notify admin.")
             setErrorMessageState(true)
         }
+    }
+
+    // Show a loading state while fetching so the table doesn't briefly
+    // flash stale context data before the fresh data arrives
+    if (isLoadingPassengers) {
+        return (
+            <div className="w-full h-full flex justify-center items-center bg-orange-50">
+                <p className="text-4xl text-emerald-950">Loading passengers...</p>
+            </div>
+        )
     }
 
     return (
@@ -208,7 +220,8 @@ function FlightPassengersTable({ flight, onBack }) {
                             <Alert error={errorMessage} />
                         </div>
 
-                        <div className="w-9/12 flex flex-row items-center justify-start gap-4">
+                        {/* Header */}
+                        <div className="w-full max-w-6xl flex flex-row items-center justify-between gap-4">
                             <div className="flex flex-row items-center justify-start gap-4">
                                 <h2 className="text-3xl text-emerald-950 font-semibold">
                                     Flight {flight.airlineCode}{flight.flightNumber}
@@ -225,11 +238,11 @@ function FlightPassengersTable({ flight, onBack }) {
                             <div className="flex justify-end">
                                 {canAlertAdmin && (
                                     <div className="flex flex-row">
-                                        {/* <button
+                                        <button
                                             className={`${alerted.includes(flight.flightId) ? 'opacity-0' : ''} text-3xl text-red-600 font-semibold cursor-pointer`}
                                             onClick={() => alertAdmin(flight)}>
                                             Alert Admin
-                                        </button> */}
+                                        </button>
                                         <div>
                                             {alerted.includes(flight.flightId) &&
                                                 (<svg className="fill-emerald-950" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 256 256"><path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"></path></svg>)
@@ -240,8 +253,9 @@ function FlightPassengersTable({ flight, onBack }) {
                             </div>
                         </div>
 
-                        <div className="w-9/12 min-h-[60vh] overflow-y-auto">
-                            <table className="w-full table-fixed border-collapse text-emerald-950">
+                        {/* Passenger Table */}
+                        <div className="w-full max-w-6xl max-h-[65vh] overflow-x-auto overflow-y-auto">
+                            <table className="min-w-[800px] w-full table-fixed border-collapse text-emerald-950">
                                 <thead>
                                     <tr>
                                         <th className="p-4">First Name</th>
