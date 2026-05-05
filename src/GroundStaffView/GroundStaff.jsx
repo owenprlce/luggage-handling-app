@@ -8,6 +8,7 @@ import ComponentFooter from "../ReusableComponents/ComponentFooter";
 import Alert from "../ReusableComponents/Alert";
 
 import { useData } from "../GlobalData/ApplicationData";
+import { reportSecurityViolation, updateBagLocation } from "../api/backend";
 
 export default function GroundStaff({ user }) {
 
@@ -93,7 +94,7 @@ function GateLocation({ selectedFlight, setSelectedFlight }) {
 
 
 function SecurityCheckpoint() {
-    const { bags, setBags, passengers, flights, setMessages, currentUser } = useData();
+    const { bags, setBags, passengers, flights, setMessages, authToken, currentUser } = useData();
 
     const [errorMessage, setErrorMessage] = useState("");
     const [errorMessageState, setErrorMessageState] = useState(false);
@@ -111,13 +112,16 @@ function SecurityCheckpoint() {
 
     // Bag Queue (FIFO) -- Bags populate in front-end based on order they are created (checked-in by Airline Staff)
     const bagsQueue = bags
-        .filter(b => b.location && b.location.startsWith("COUNTER-"))
+        .filter(b => b.location && (b.location.startsWith("COUNTER-") || b.location.startsWith("Check-in counter")))
         .slice(0, 20);
 
-    const handleClearBag = (bag) => {
+    const handleClearBag = async (bag) => {
         // Find passenger and flight info for this bag
-        const passenger = passengers.find(p => p.ticketNumber === bag.ticketNumber);
-        const flight = flights.find(f => f.ticketNumbers && f.ticketNumbers.includes(bag.ticketNumber));
+        const passenger = passengers.find(p => String(p.ticketNumber) === String(bag.ticketNumber));
+        const flight = flights.find(f =>
+            f.flightId === bag.flightId ||
+            (f.ticketNumbers && f.ticketNumbers.some(ticketNumber => String(ticketNumber) === String(bag.ticketNumber)))
+        );
 
         if (!flight) {
             setErrorMessage("Cannot find flight information for this bag");
@@ -136,7 +140,16 @@ function SecurityCheckpoint() {
         }
 
         // Cleared - send to gate
-        const gateLocation = `GATE-${flight.gateInformation.terminal}${flight.gateInformation.gateNumber}`;
+        const gateDetail = `${flight.gateInformation.terminal}${flight.gateInformation.gateNumber}`;
+        const gateLocation = `Gate - ${gateDetail}`;
+
+        try {
+            await updateBagLocation(authToken, bag.bagId, "Gate", gateDetail)
+        } catch (err) {
+            setErrorMessage(err.message || "Failed to clear bag.")
+            setErrorMessageState(true)
+            return;
+        }
 
         setBags(bags => bags.map(b =>
             b.bagId === bag.bagId
@@ -148,9 +161,12 @@ function SecurityCheckpoint() {
         setErrorMessageState(true);
     };
 
-    const handleSecurityViolation = (bag) => {
-        const passenger = passengers.find(p => p.ticketNumber === bag.ticketNumber);
-        const flight = flights.find(f => f.ticketNumbers && f.ticketNumbers.includes(bag.ticketNumber));
+    const handleSecurityViolation = async (bag) => {
+        const passenger = passengers.find(p => String(p.ticketNumber) === String(bag.ticketNumber));
+        const flight = flights.find(f =>
+            f.flightId === bag.flightId ||
+            (f.ticketNumbers && f.ticketNumbers.some(ticketNumber => String(ticketNumber) === String(bag.ticketNumber)))
+        );
 
         if (!passenger || !flight) {
             setErrorMessage("Cannot find passenger or flight information");
@@ -158,10 +174,19 @@ function SecurityCheckpoint() {
             return;
         }
 
+        try {
+            await updateBagLocation(authToken, bag.bagId, "Security check")
+            await reportSecurityViolation(authToken, bag.ticketNumber, bag.bagId, currentUser.username)
+        } catch (err) {
+            setErrorMessage(err.message || "Failed to report security violation.")
+            setErrorMessageState(true)
+            return;
+        }
+
         // Update bag location to security check
         setBags(bags => bags.map(b =>
             b.bagId === bag.bagId
-                ? { ...b, location: "SECURITY-CHECK", securityStatus: "violation" }
+                ? { ...b, location: "Security check", securityStatus: "violation" }
                 : b
         ));
 
@@ -199,7 +224,7 @@ function SecurityCheckpoint() {
                             Security Checkpoint
                         </h2>
                         <span className="text-lg font-semibold text-emerald-800 bg-white px-4 py-2 rounded-full">
-                            {bagsQueue.length} / {bags.filter(b => b.location && b.location.startsWith("COUNTER-")).length} total
+                            {bagsQueue.length} / {bags.filter(b => b.location && (b.location.startsWith("COUNTER-") || b.location.startsWith("Check-in counter"))).length} total
                         </span>
                     </div>
 
@@ -213,8 +238,11 @@ function SecurityCheckpoint() {
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
                                 {bagsQueue.map((bag, index) => {
-                                    const passenger = passengers.find(p => p.ticketNumber === bag.ticketNumber);
-                                    const flight = flights.find(f => f.ticketNumbers && f.ticketNumbers.includes(bag.ticketNumber));
+                                    const passenger = passengers.find(p => String(p.ticketNumber) === String(bag.ticketNumber));
+                                    const flight = flights.find(f =>
+                                        f.flightId === bag.flightId ||
+                                        (f.ticketNumbers && f.ticketNumbers.some(ticketNumber => String(ticketNumber) === String(bag.ticketNumber)))
+                                    );
 
                                     return (
                                         <div
