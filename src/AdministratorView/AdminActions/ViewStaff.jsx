@@ -4,9 +4,13 @@ import RemovalPopup from "../../ReusableComponents/Reusable"
 import ComponentFooter from "../../ReusableComponents/ComponentFooter";
 import { useData } from "../../GlobalData/ApplicationData";
 
+import { removeStaff as removeStaffAPI } from "../../api/backend"
+
 export default function ViewStaff() {
 
-    const { staff, setStaff } = useData()
+    const { staff, setStaff, authToken } = useData()
+
+    console.log(staff)
 
     const staffToDisplay = staff.filter(s => s.type !== 'admin');
 
@@ -14,19 +18,27 @@ export default function ViewStaff() {
     const [deletionPopup, setDeletionPopup] = useState(false);
     const [staffToDelete, setStaffToDelete] = useState("");
 
-    const removeStaff = (username) => {
-        setStaff(prev => prev.filter(staff => staff.username !== username))
+    const removeStaff = async (username) => {
+        try {
+            await removeStaffAPI(authToken, username)
+
+            // Backend confirmed — update local state
+            setStaff(prev => prev.filter(s => s.username !== username))
+
+        } catch (err) {
+            alert(err.message || "Failed to remove staff member.")
+        }
     }
 
     return (
         <>
             <div className="w-full h-full">{staff.length < 1 ? (
 
-                <div className="w-full h-full flex justify-center items-center bg-orange-50">
-                    <p className="text-6xl text-emerald-950">No staff present</p>
+                <div className="w-full h-full flex justify-center items-center bg-orange-50 px-4 py-32">
+                    <p className="text-4xl md:text-6xl text-emerald-950 text-center">No staff present</p>
                 </div>
             ) : (
-                <div className="w-full h-full bg-orange-50 flex justify-center items-center">
+                <div className="w-full h-full bg-orange-50 flex justify-center items-center px-4 py-32">
 
                     <ComponentFooter title={'Staff'} />
 
@@ -65,7 +77,7 @@ export default function ViewStaff() {
                             <tbody>
                                 {staffToDisplay.map((staff) => (
                                     <tr key={staff.username} className="text-center border-b">
-                                        <td className="p-4">{staff.type}</td>
+                                        <td className="p-4">{staff.role}</td>
                                         <td className="p-4">{staff.firstName}</td>
                                         <td className="p-4">{staff.lastName}</td>
                                         <td className="p-4">{staff.emailAddress}</td>

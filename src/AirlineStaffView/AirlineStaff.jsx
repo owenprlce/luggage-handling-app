@@ -27,11 +27,11 @@ export default function AirlineStaff({ user }) {
 
     return (
         <>
-            <div className="w-full h-full bg-orange-50">
+            <div className="relative w-full h-full bg-orange-50">
                 <ComponentFooter title={"Airline Staff Dashboard"} />
                 {
                     !selectedFlight &&
-                    <div className="absolute h-9/12 top-1/2 left-0 -translate-y-1/2">
+                    <div className="z-20 absolute h-9/12 top-1/2 left-0 -translate-y-1/2">
                         <StaffNavigation setView={setView} isHovered={isHovered} type={'airline-staff'} />
                     </div>
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 
 import { useData } from "../GlobalData/ApplicationData";
+import { loadBag } from "../api/backend";
 
 import Alert from "../ReusableComponents/Alert";
 
@@ -12,7 +13,7 @@ function FlightsList({ selectedFlight, setSelectedFlight }) {
         <div className="w-full h-full flex flex-col justify-start items-center gap-12">
 
             {!selectedFlight && (
-                <div className="w-9/12 grid grid-cols-3 gap-6">
+                <div className="w-9/12 grid grid-cols-3 gap-6 overflow-y-scroll">
                     {flights.map((flight) => (
                         <div
                             key={flight.flightId}
@@ -38,7 +39,7 @@ function FlightsList({ selectedFlight, setSelectedFlight }) {
             {selectedFlight && (
                 <div className="w-full h-full flex justify-center items-center">
 
-                    <div onClick={() => setSelectedFlight(null)} className="z-20 rounded-[50px] absolute top-4 left-4 bg-emerald-800 border-2 border-emerald-700 cursor-pointer">
+                    <div onClick={() => setSelectedFlight(null)} className="z-40 rounded-[50px] fixed top-4 left-4 bg-emerald-800 border-2 border-emerald-700 cursor-pointer">
                         <div className="h-20 w-20 flex justify-center items-center">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#FFFFFF" viewBox="0 0 256 256"><path d="M232,144a64.07,64.07,0,0,1-64,64H80a8,8,0,0,1,0-16h88a48,48,0,0,0,0-96H51.31l34.35,34.34a8,8,0,0,1-11.32,11.32l-48-48a8,8,0,0,1,0-11.32l48-48A8,8,0,0,1,85.66,45.66L51.31,80H168A64.07,64.07,0,0,1,232,144Z"></path></svg>
                         </div>
@@ -77,7 +78,8 @@ function FlightPassengersTable({ flight, onBack }) {
     }, [errorMessageState])
 
     const flightPassengers = passengers.filter(p =>
-        flight.ticketNumbers.includes(p.ticketNumber)
+        String(p.flight) === String(flight.flightId) ||
+        flight.ticketNumbers.some(ticketNumber => String(ticketNumber) === String(p.ticketNumber))
     );
 
     const handleViewBags = (passenger) => {
@@ -93,17 +95,17 @@ function FlightPassengersTable({ flight, onBack }) {
 
             <div className="w-full h-full flex justify-center items-center">{flightPassengers.length < 1 ? (
                 <div className="w-full h-full flex justify-center items-center bg-orange-50">
-                    <p className="text-6xl text-emerald-950">No passengers registered</p>
+                    <p className="text-4xl md:text-6xl text-emerald-950 text-center">No passengers registered</p>
                 </div>
             ) : (
 
                 <div className="w-full p-4 flex flex-col items-center gap-y-16">
 
-                    <div className={`absolute top-36 right-8 h-24 w-96 transition-all ease-in-out ${errorMessageState ? 'duration-300 translate-x-0 opacity-100' : 'duration-300 translate-x-full opacity-0'}`}>
+                    <div className={`fixed top-32 right-4 z-40 h-24 w-[min(24rem,calc(100vw-2rem))] transition-all ease-in-out ${errorMessageState ? 'duration-300 translate-x-0 opacity-100' : 'duration-300 translate-x-full opacity-0'}`}>
                         <Alert error={errorMessage} />
                     </div>
 
-                    <div className="w-9/12 flex flex-row items-center justify-between gap-4">
+                    <div className="w-9/12 flex flex-row items-center justify-start gap-4">
                         <div className="flex flex-row items-center justify-start gap-4">
                             <h2 className="text-3xl text-emerald-950 font-semibold">
                                 Flight {flight.airlineCode}{flight.flightNumber}
@@ -174,35 +176,46 @@ function FlightPassengersTable({ flight, onBack }) {
 
 function PassengerBagsPopup({ passenger, flight, close }) {
 
-    const { passengers, bags, setBags } = useData();
+    const { passengers, bags, setBags, authToken } = useData();
+    const [errorMessage, setErrorMessage] = useState("")
 
     const passengerBags = bags.filter(
-        b => b.ticketNumber === passenger.ticketNumber
+        b => String(b.ticketNumber) === String(passenger.ticketNumber)
     );
 
     const gateLocation = `GATE-${flight.gateInformation.terminal}${flight.gateInformation.gateNumber}`;
-    const toLoad = `LOADED-${flight.airlineCode}${flight.flightNumber}`;
+    const backendGateLocation = `Gate - ${flight.gateInformation.terminal}${flight.gateInformation.gateNumber}`;
+    const toLoad = `Loaded - ${flight.flightId}`;
 
-    const handleBagLocationChange = (id, toLocation) => {
+    const handleBagLocationChange = async (id, toLocation) => {
         
         // Find passenger
-        const currentPassenger = passengers.find(p => p.ticketNumber === passenger.ticketNumber);
+        const currentPassenger = passengers.find(p => String(p.ticketNumber) === String(passenger.ticketNumber));
         
         // Cannot load luggage if passenger has not boarded
         if (!currentPassenger || currentPassenger.status !== "Boarded") {
+            setErrorMessage("Passenger must be boarded before luggage can be loaded.")
             return; 
         }
 
         const bag = bags.find(b => b.bagId === id);
         
         // Bag can only be loaded if at gate
-        if (bag && bag.location === gateLocation) {
+        if (bag && (bag.location === gateLocation || bag.location === backendGateLocation)) {
+            try {
+                await loadBag(authToken, id)
+            } catch (err) {
+                setErrorMessage(err.message || "Failed to load bag.")
+                return;
+            }
+
             setBags(bags => bags.map(b => b.bagId === id ? { ...b, location: toLocation } : b));
+            setErrorMessage("")
         }
     }
 
     return (
-        <div className="z-20 w-screen h-screen absolute flex justify-center items-center bg-black/30 backdrop-blur-xs">
+        <div className="fixed inset-0 z-40 min-h-screen overflow-y-auto p-4 flex justify-center items-center bg-black/30 backdrop-blur-xs">
             <div className="p-8 w-full max-w-xl bg-emerald-800 border-2 border-emerald-950 rounded-2xl shadow-2xl">
 
                 <h2 className="text-3xl font-bold text-white text-center mb-4">
@@ -210,9 +223,14 @@ function PassengerBagsPopup({ passenger, flight, close }) {
                 </h2>
 
                 <div className={`my-8 max-h-96 flex flex-col gap-6 overflow-y-auto`}>
+                    {errorMessage && (
+                        <div className="p-3 bg-red-100 text-red-800 rounded-xl text-center">
+                            {errorMessage}
+                        </div>
+                    )}
                     {passengerBags.length > 0 ? (
                         passengerBags.map((bag, idx) => {
-                            const isAtGate = bag.location === gateLocation;
+                            const isAtGate = bag.location === gateLocation || bag.location === backendGateLocation;
                             const isBoarded = passenger.status === "Boarded";
                             const canLoad = isAtGate && isBoarded;
 

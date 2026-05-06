@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 
 import { useData } from "../../GlobalData/ApplicationData";
+import { removeBagsByPassenger, reportCheckInIssue } from "../../api/backend";
 
 import Alert from "../../ReusableComponents/Alert";
 
@@ -42,7 +43,7 @@ function FlightsList({ airline, selectedFlight, setSelectedFlight }) {
             {selectedFlight && (
                 <div className="w-full h-full flex justify-center items-center">
 
-                    <div onClick={() => setSelectedFlight(null)} className="z-20 rounded-[50px] absolute top-4 left-4 bg-emerald-800 border-2 border-emerald-700 cursor-pointer">
+                    <div onClick={() => setSelectedFlight(null)} className="z-40 rounded-[50px] fixed top-4 left-4 bg-emerald-800 border-2 border-emerald-700 cursor-pointer">
                         <div className="h-20 w-20 flex justify-center items-center">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#FFFFFF" viewBox="0 0 256 256"><path d="M232,144a64.07,64.07,0,0,1-64,64H80a8,8,0,0,1,0-16h88a48,48,0,0,0,0-96H51.31l34.35,34.34a8,8,0,0,1-11.32,11.32l-48-48a8,8,0,0,1,0-11.32l48-48A8,8,0,0,1,85.66,45.66L51.31,80H168A64.07,64.07,0,0,1,232,144Z"></path></svg>
                         </div>
@@ -62,7 +63,7 @@ export default FlightsList;
 
 function FlightPassengersTable({ flight, onBack }) {
 
-    const { passengers, setPassengers, setMessages, bags, setBags, currentUser } = useData()
+    const { passengers, setPassengers, setMessages, bags, setBags, authToken, currentUser } = useData()
 
     const [selectedPassengerViolation, setSelectedPassengerViolation] = useState(null)
     const [selectedPassengerCheckIn, setSelectedPassengerCheckIn] = useState(null)
@@ -83,7 +84,8 @@ function FlightPassengersTable({ flight, onBack }) {
     }, [errorMessageState])
 
     const flightPassengers = passengers.filter(p =>
-        flight.ticketNumbers.includes(p.ticketNumber)
+        String(p.flight) === String(flight.flightId) ||
+        flight.ticketNumbers.some(ticketNumber => String(ticketNumber) === String(p.ticketNumber))
     );
 
     const handleViewBags = (passenger) => {
@@ -102,13 +104,18 @@ function FlightPassengersTable({ flight, onBack }) {
         setSelectedPassengerCheckIn(null)
     };
 
-    const confirmCheckInIssue = () => {
+    const confirmCheckInIssue = async () => {
         if (!selectedPassengerCheckIn) return;
 
-        setErrorMessage(`Passenger ${selectedPassengerCheckIn.firstName} ${selectedPassengerCheckIn.lastName} has been flagged for a check-in issue!`)
-        setErrorMessageState(true)
+        try {
+            await reportCheckInIssue(authToken, selectedPassengerCheckIn.ticketNumber)
+        } catch (err) {
+            setErrorMessage(err.message || "Failed to report check-in issue.")
+            setErrorMessageState(true)
+            return;
+        }
 
-        setPassengers(passengers => passengers.map(p => p.ticketNumber === selectedPassengerCheckIn.ticketNumber
+        setPassengers(passengers => passengers.map(p => String(p.ticketNumber) === String(selectedPassengerCheckIn.ticketNumber)
             ? { ...p, checkInIssue: true, securityViolation: false } : p
         ));
 
@@ -127,6 +134,8 @@ function FlightPassengersTable({ flight, onBack }) {
 
         ])
 
+        setErrorMessage(`Passenger ${selectedPassengerCheckIn.firstName} ${selectedPassengerCheckIn.lastName} has been flagged for a check-in issue!`)
+        setErrorMessageState(true)
         setSelectedPassengerCheckIn(null);
     };
 
@@ -139,17 +148,22 @@ function FlightPassengersTable({ flight, onBack }) {
         setSelectedPassengerViolation(null)
     };
 
-    const confirmSecurityViolation = () => {
+    const confirmSecurityViolation = async () => {
         if (!selectedPassengerViolation) return;
 
-        setErrorMessage(`Passenger ${selectedPassengerViolation.firstName} ${selectedPassengerViolation.lastName} has been flagged for a security violation!`)
-        setErrorMessageState(true)
+        try {
+            await removeBagsByPassenger(authToken, selectedPassengerViolation.ticketNumber)
+        } catch (err) {
+            setErrorMessage(err.message || "Failed to remove passenger bags.")
+            setErrorMessageState(true)
+            return;
+        }
 
-        setBags(bags => bags.filter(b => b.ticketNumber !== selectedPassengerViolation.ticketNumber));
+        setBags(bags => bags.filter(b => String(b.ticketNumber) !== String(selectedPassengerViolation.ticketNumber)));
         console.log(bags);
 
 
-        setPassengers(passenger => passenger.map(p => p.ticketNumber === selectedPassengerViolation.ticketNumber ?
+        setPassengers(passenger => passenger.map(p => String(p.ticketNumber) === String(selectedPassengerViolation.ticketNumber) ?
             { ...p, securityViolation: true, checkInIssue: false } : p
         ))
 
@@ -168,6 +182,8 @@ function FlightPassengersTable({ flight, onBack }) {
 
         ])
 
+        setErrorMessage(`Passenger ${selectedPassengerViolation.firstName} ${selectedPassengerViolation.lastName} has been flagged for a security violation!`)
+        setErrorMessageState(true)
         setSelectedPassengerViolation(null);
     }
 
@@ -176,8 +192,8 @@ function FlightPassengersTable({ flight, onBack }) {
         <>
 
             <div className="w-full h-full flex justify-center items-center">{flightPassengers.length < 1 ? (
-                <div className="w-full h-full flex justify-center items-center bg-orange-50">
-                    <p className="text-6xl text-emerald-950">No passengers registered</p>
+                <div className="w-full h-full flex justify-center items-center">
+                    <p className="text-4xl md:text-6xl text-emerald-950 text-center">No passengers registered</p>
                 </div>
             ) : (
 
@@ -291,12 +307,12 @@ function SecurityViolationPopup({ passenger, confirm, cancel }) {
 
     const { bags } = useData()
 
-    const passengerBags = bags.filter(b => b.ticketNumber === passenger.ticketNumber)
+    const passengerBags = bags.filter(b => String(b.ticketNumber) === String(passenger.ticketNumber))
 
     if (!passenger) return null;
 
     return (
-        <div className="z-20 w-screen h-screen absolute flex justify-center items-center bg-black/30 backdrop-blur-xs">
+        <div className="fixed inset-0 z-40 min-h-screen overflow-y-auto p-4 flex justify-center items-center bg-black/30 backdrop-blur-xs">
             <div className="p-8 w-full max-w-xl mx-4 bg-emerald-800 border-2 border-emerald-950 flex flex-col rounded-2xl shadow-2xl">
 
                 {/* Icon */}
@@ -329,7 +345,7 @@ function SecurityViolationPopup({ passenger, confirm, cancel }) {
                 </div>
 
                 {/* Buttons */}
-                <div className="flex flex-row gap-8">
+                <div className="flex flex-col sm:flex-row gap-4 sm:gap-8">
                     <button
                         className="flex-1 p-4 bg-zinc-50 hover:bg-zinc-300 text-black rounded-xl transition-all duration-300 cursor-pointer hover:scale-105"
                         onClick={cancel}
@@ -354,7 +370,7 @@ function CheckInIssuePopup({ passenger, confirm, cancel }) {
     if (!passenger) return null;
 
     return (
-        <div className="z-20 w-screen h-screen absolute flex justify-center items-center bg-black/30 backdrop-blur-xs">
+        <div className="fixed inset-0 z-40 min-h-screen overflow-y-auto p-4 flex justify-center items-center bg-black/30 backdrop-blur-xs">
             <div className="p-8 w-full max-w-xl mx-4 bg-emerald-800 border-2 border-emerald-950 flex flex-col rounded-2xl shadow-2xl">
 
                 {/* Icon */}
@@ -370,7 +386,7 @@ function CheckInIssuePopup({ passenger, confirm, cancel }) {
                 </p>
 
                 {/* Buttons */}
-                <div className="flex flex-row gap-8">
+                <div className="flex flex-col sm:flex-row gap-4 sm:gap-8">
                     <button
                         className="flex-1 p-4 bg-zinc-50 hover:bg-zinc-300 text-black rounded-xl transition-all duration-300 cursor-pointer hover:scale-105"
                         onClick={cancel}
@@ -393,11 +409,11 @@ function PassengerBagsPopup({ passenger, close }) {
     const { bags } = useData();
 
     const passengerBags = bags.filter(
-        b => b.ticketNumber === passenger.ticketNumber
+        b => String(b.ticketNumber) === String(passenger.ticketNumber)
     );
 
     return (
-        <div className="z-20 w-screen h-screen absolute flex justify-center items-center bg-black/30 backdrop-blur-xs">
+        <div className="fixed inset-0 z-40 min-h-screen overflow-y-auto p-4 flex justify-center items-center bg-black/30 backdrop-blur-xs">
             <div className="p-8 w-full max-w-xl bg-emerald-800 border-2 border-emerald-950 rounded-2xl shadow-2xl">
 
                 <h2 className="text-3xl font-bold text-white text-center mb-4">

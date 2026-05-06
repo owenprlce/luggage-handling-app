@@ -6,7 +6,15 @@ import ComponentFooter from "../../ReusableComponents/ComponentFooter"
 import Alert from "../../ReusableComponents/Alert"
 import { useData } from "../../GlobalData/ApplicationData"
 
+import { addStaff as addStaffAPI } from "../../api/backend"
+
 import { nameRegex, emailRegex, phoneNumberRegex } from "../../RegexValidation/form-validation"
+
+const ROLE_MAP = {
+    "ground-staff":  "Ground Staff",
+    "airline-staff": "Airline Staff",
+    "gate-staff":    "Gate Staff",
+}
 
 export default function AddStaff() {
     const [type, setType] = useState("ground-staff")
@@ -15,6 +23,7 @@ export default function AddStaff() {
     const [email, setEmail] = useState("")
     const [phoneNumber, setPhoneNumber] = useState("")
     const [airline, setAirline] = useState("")
+    const [isLoading, setIsLoading] = useState(false)
 
 
     const [validForm, setValidForm] = useState(false);
@@ -23,7 +32,7 @@ export default function AddStaff() {
     const [validEmail, setValidEmail] = useState(false);
     const [validPhoneNumber, setValidPhoneNumber] = useState(false);
 
-    const { staff, setStaff } = useData()
+    const { staff, setStaff, authToken } = useData()
 
     // Temporary error message to display
     const [errorMessage, setErrorMessage] = useState("")
@@ -68,79 +77,67 @@ export default function AddStaff() {
         }
     }, [firstName, lastName, email, phoneNumber, airline, type])
 
-    const addStaff = (e) => {
+    const addNewStaff = async (e) => {
         e.preventDefault()
-
-        // We will not worry about existing email for sake of demo purposes (To recieve emails of user credentials)
-
-        // const existingEmail = staff.some(s => s.email === email);
-        const existingPhoneNumber = staff.some(s => s.phoneNumber === phoneNumber);
-
-        // if (existingEmail) {
-        //     setErrorMessage(`Staff (Email: ${email}): already exists!`)
-        //     setErrorMessageState(true)
-        //     return;
-        // }
-
-        if (existingPhoneNumber) {
-            setErrorMessage(`Staff (Phone: ${phoneNumber}): already exists!`)
-            setErrorMessageState(true)
-            return;
-        }
-
-        let generatedUsername = null
-        let checkUsername = false
-
-        const generatedPassword = generatePassword()
-
-        do {
-
-            generatedUsername = generateUsername()
-            checkUsername = staff.some(s => s.username === generatedUsername)
-
-        } while (checkUsername)
-
-        const newStaff = {
-            type: type,
-            firstName: firstName,
-            lastName: lastName,
-            emailAddress: email,
-            phoneNumber: phoneNumber,
-            username: generatedUsername,
-            password: generatedPassword,
-            changedPassword: false
-        }
-
-        if (type !== "ground-staff") {
-            newStaff.airline = airline;
-        }
-
-        console.log("Created new staff", newStaff)
-
-        setStaff(prev => [...prev, newStaff])
-
-        sendCredentialsToEmail(firstName, lastName, email, generatedUsername, generatedPassword)
-            .then(() => {
-                console.log("SENT!");
+        if (isLoading) return
+        setIsLoading(true)
+    
+        let result = null   // declared outside so both blocks can access it
+    
+        try {
+            result = await addStaffAPI(authToken, {
+                firstName,
+                lastName,
+                email,
+                phone:       phoneNumber,
+                role:        ROLE_MAP[type],
+                airlineCode: (type === "airline-staff" || type === "gate-staff") ? airline : undefined,
             })
-            .catch((error) => {
-                console.error("COULD NOT SEND", error);
-            }) 
-
-        setFirstName("")
-        setLastName("")
-        setEmail("")
-        setPhoneNumber("")
-        setAirline("")
-        setType("ground-staff")
+    
+            setStaff(prev => [...prev, {
+                type,
+                firstName,
+                lastName,
+                emailAddress: email,
+                phoneNumber,
+                username:        result.username,
+                password:        result.temporary_password,
+                changedPassword: false,
+                ...(type !== "ground-staff" && { airline }),
+            }])
+    
+            setErrorMessage(`Staff member ${firstName} ${lastName} added! Credentials sent to ${email}.`)
+            setErrorMessageState(true)
+    
+            setFirstName(""); setLastName(""); setEmail("")
+            setPhoneNumber(""); setAirline(""); setType("ground-staff")
+    
+        } catch (err) {
+            setErrorMessage(err.message || "Failed to add staff member.")
+            setErrorMessageState(true)
+        } finally {
+            setIsLoading(false)
+        }
+    
+        // Only attempt email if the backend call succeeded
+        if (result) {
+            try {
+                await sendCredentialsToEmail(firstName, lastName, email,
+                    result.username, result.temporary_password)
+                console.log("Credentials emailed successfully")
+                console.log(result.username, result.temporary_password)
+            } catch (emailError) {
+                console.error("Could not send email:", emailError)
+            }
+        }
     }
 
     // Since our applicaiton has not been deployed, I am not able to use process.env to acces the credentials, so it will be hardcoded on my end for now
     // I can send you my credentials if you want to test on your end, if not, I console.log each created staff and it contains the generated credentials
     const sendCredentialsToEmail = (firstName, lastName, email, username, password) => {
         return emailjs.send(
-            // Service ID
-            // Template ID
+            import.meta.env.VITE_APP_SERVICE_ID,
+            import.meta.env.VITE_APP_TEMPLATE_ID,
             {
                 email: email,
                 first: firstName,
@@ -148,7 +145,7 @@ export default function AddStaff() {
                 username: username,
                 password: password,
             },
-            // Public Key
+            import.meta.env.VITE_APP_PUBLIC_KEY
         )
     }
 
@@ -198,22 +195,18 @@ export default function AddStaff() {
     }
 
     return (
-        <div className="w-full h-full bg-orange-50 flex justify-center items-center">
-
-            <div className={`absolute top-36 right-8 h-24 w-96 transition-all ease-in-out ${errorMessageState ? 'duration-300 translate-x-0 opacity-100' : 'duration-300 translate-x-full opacity-0'}`}>
-                <Alert error={errorMessage} />
-            </div>
+        <div className="w-full min-h-screen bg-orange-50 flex justify-center items-center px-4 py-32 overflow-y-auto">
 
             <ComponentFooter title={'Add Staff Form'} />
 
+            <div className={`fixed top-32 right-4 z-40 h-24 w-[min(24rem,calc(100vw-2rem))] transition-all ease-in-out ${errorMessageState ? 'duration-300 translate-x-0 opacity-100' : 'duration-300 translate-x-full opacity-0'}`}>
+                <Alert error={errorMessage} />
+            </div>
+
             <form
-                onSubmit={addStaff}
-                className="p-16 relative w-4/12 min-h-2/12 bg-emerald-800 outline-2 outline-emerald-950 rounded-3xl flex flex-col justify-center items-center gap-8"
+                onSubmit={addNewStaff}
+                className="p-8 sm:p-12 relative w-full max-w-xl bg-emerald-800 outline-2 outline-emerald-950 rounded-3xl flex flex-col justify-center items-center gap-6 sm:gap-8"
             >
-                <button type="submit" className={`hover:scale-105 absolute bottom-0 -right-[120px] rounded-full bg-emerald-800 border-2 border-emerald-950 size-32 gap-y-4 text-white transition-all duration-500 flex flex-col justify-center items-center
-                                    ${validForm ? '' : 'ease-in opacity-0'}`}>
-                    <svg className="fill-white" xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="#000000" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm48-88a8,8,0,0,1-8,8H136v32a8,8,0,0,1-16,0V136H88a8,8,0,0,1,0-16h32V88a8,8,0,0,1,16,0v32h32A8,8,0,0,1,176,128Z"></path></svg>
-                </button>
 
                 <div className="w-11/12 flex flex-col gap-y-4">
                     <div className="w-full flex flex-row justify-between">
@@ -275,7 +268,7 @@ export default function AddStaff() {
                 </div>
 
 
-                <div className="w-11/12 flex flex-row gap-4">
+                <div className="w-11/12 flex flex-col sm:flex-row gap-4">
                     <div className="w-full flex flex-col gap-y-4">
                         <label className="text-2xl text-white">Staff Type</label>
                         <select
@@ -303,6 +296,11 @@ export default function AddStaff() {
                         </div>
                     )}
                 </div>
+
+                <button type="submit" className={`hover:scale-105 absolute bottom-0 -right-[120px]  mt-2 rounded-full bg-emerald-800 border-2 border-emerald-950 size-24 sm:size-28 gap-y-4 text-white transition-all duration-500 flex flex-col justify-center items-center
+                                    ${validForm ? '' : 'ease-in opacity-0 pointer-events-none'}`}>
+                    <svg className="fill-white" xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="#000000" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm48-88a8,8,0,0,1-8,8H136v32a8,8,0,0,1-16,0V136H88a8,8,0,0,1,0-16h32V88a8,8,0,0,1,16,0v32h32A8,8,0,0,1,176,128Z"></path></svg>
+                </button>
             </form>
         </div>
     )

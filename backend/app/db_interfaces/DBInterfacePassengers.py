@@ -8,13 +8,22 @@ class DBInterfacePassengers:
     def store_passenger(self, passenger: Passenger) -> None:
         conn, cursor = get_connection()
         try:
+
+            # One entry per passenger (no duplicate ticket)
+            cursor.execute(
+                "SELECT ticket_number FROM Passenger WHERE ticket_number = %s",
+                (passenger.ticket_number,)
+            )
+            if cursor.fetchone():
+                raise ValueError(f"Ticket number {passenger.ticket_number} is already in use")
+
             # One entry per passenger (no duplicate identification)
             cursor.execute(
                 "SELECT ticket_number FROM Passenger WHERE identification = %s",
                 (passenger.identification,)
             )
             if cursor.fetchone():
-                raise ValueError("Passenger already has a ticket in the system")
+                raise ValueError(f"Identification number {passenger.identification} is already registered to another ticket")
 
             # Flight must exist
             cursor.execute(
@@ -104,6 +113,18 @@ class DBInterfacePassengers:
             cursor.execute(
                 "DELETE FROM Passenger WHERE ticket_number = %s",
                 (ticket_number,)
+            )
+            conn.commit()
+        finally:
+            cursor.close()
+            conn.close()
+
+    def remove_passengers_by_flight(self, flight_id: str) -> None:
+        conn, cursor = get_connection()
+        try:
+            cursor.execute(
+                "DELETE FROM Passenger WHERE flight_id = %s",
+                (flight_id.upper(),)
             )
             conn.commit()
         finally:

@@ -1,38 +1,71 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 import { useData } from "../../GlobalData/ApplicationData";
 import RemovalPopup from "../../ReusableComponents/Reusable"
 import ComponentFooter from "../../ReusableComponents/ComponentFooter";
 
+import { removePassenger as removePassengerAPI, fetchPassengers } from "../../api/backend"
+
 export default function ViewPassengers() {
 
-    const { passengers, setPassengers, bags, setBags } = useData()
+    const { passengers, setPassengers, bags, setBags, authToken } = useData()
 
     // ***Backend Route (Fetch Flights) 
     const [deletionPopup, setDeletionPopup] = useState(false);
     const [passengerToDelete, setPassengerToDelete] = useState("");
 
+    const [isLoading, setIsLoading] = useState(true)
+
     // Not necesarry to remove all passenger bags of passenger being deleted, since Airline Staff removes all bags upon security violation report
     // Doesn't hurt to keep this here
-    const removePassenger = (id) => {
-        const passengerBeingRemoved = passengers.find(p => p.identification === id)
-
-        setPassengers(prev => prev.filter(passenger => passenger.identification !== id))
-
-        if(passengerBeingRemoved) {
-            setBags(bag => bag.filter(b => b.ticketNumber !== passengerBeingRemoved.ticketNumber))
+    // Fetch fresh passengers from backend every time this view is opened
+    useEffect(() => {
+        async function refreshPassengers() {
+            setIsLoading(true)
+            try {
+                const fresh = await fetchPassengers(authToken)
+                setPassengers(fresh)
+            } catch (err) {
+                console.error("Failed to refresh passengers:", err)
+            } finally {
+                setIsLoading(false)
+            }
         }
+        refreshPassengers()
+    }, [authToken])
+
+    const removePassenger = async (ticketNumber, identification) => {
+        try {
+            // Backend removes the passenger and cascades to their bags
+            await removePassengerAPI(authToken, ticketNumber)
+
+            // Backend confirmed — update local state
+            setPassengers(prev => prev.filter(p => p.identification !== identification))
+            setBags(prev => prev.filter(b => b.ticketNumber !== ticketNumber))
+
+        } catch (err) {
+            alert(err.message || "Failed to remove passenger.")
+        }
+    }
+
+    // Show loading state while fetching fresh data
+    if (isLoading) {
+        return (
+            <div className="w-full h-full flex justify-center items-center bg-orange-50 px-4 py-32">
+                <p className="text-4xl text-emerald-950">Loading passengers...</p>
+            </div>
+        )
     }
 
     return (
         <>
             <div className="w-full h-full">{passengers.length < 1 ? (
 
-                <div className="w-full h-full flex justify-center items-center bg-orange-50">
-                    <p className="text-6xl text-emerald-950">No passengers present</p>
+                <div className="w-full h-full flex justify-center items-center bg-orange-50 px-4 py-32">
+                    <p className="text-4xl md:text-6xl text-emerald-950 text-center">No passengers present</p>
                 </div>
             ) : (
-                <div className="w-full h-full bg-orange-50 flex justify-center items-center">
+                <div className="w-full h-full bg-orange-50 flex justify-center items-center px-4 py-32">
 
                     <ComponentFooter title={'Passengers'} />
 
@@ -40,7 +73,7 @@ export default function ViewPassengers() {
                         <RemovalPopup
                             toRemove={passengerToDelete}
                             confirm={() => {
-                                removePassenger(passengerToDelete.identification);
+                                removePassenger(passengerToDelete.ticketNumber, passengerToDelete.identification);
                                 setDeletionPopup(false);
                                 setPassengerToDelete("");
                             }}

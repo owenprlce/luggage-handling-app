@@ -55,7 +55,6 @@ class DBInterfaceStaff:
             username       = self.generate_username(staff_data.first_name, staff_data.last_name, cursor)
             plain_password = self.generate_password()
             password_hash  = bcrypt.hashpw(plain_password.encode(), bcrypt.gensalt()).decode()
-
             # Insert login credentials first (Staff has a FK to Staff_Login)
             cursor.execute(
                 "INSERT INTO Staff_Login (username, user_password, user_role) VALUES (%s, %s, %s)",
@@ -108,7 +107,7 @@ class DBInterfaceStaff:
             if role:
                 cursor.execute(
                     """SELECT s.username, s.firstname, s.lastname, s.email, s.phone,
-                              s.airline_code, sl.user_role AS role
+                              s.airline_code, sl.user_role AS type
                        FROM Staff s
                        JOIN Staff_Login sl ON s.username = sl.username
                        WHERE sl.user_role = %s""",
@@ -117,7 +116,7 @@ class DBInterfaceStaff:
             else:
                 cursor.execute(
                     """SELECT s.username, s.firstname, s.lastname, s.email, s.phone,
-                              s.airline_code, sl.user_role AS role
+                              s.airline_code, sl.user_role AS type
                        FROM Staff s
                        JOIN Staff_Login sl ON s.username = sl.username"""
                 )

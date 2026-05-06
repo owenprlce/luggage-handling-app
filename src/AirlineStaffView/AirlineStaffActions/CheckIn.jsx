@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 
 import { useData } from "../../GlobalData/ApplicationData";
+import { checkInPassenger, fetchBagsByFlight, fetchPassengers } from "../../api/backend";
 
 import { ticketNumberRegex, terminalRegex, counterNumberRegex } from "../../RegexValidation/form-validation";
 
@@ -8,7 +9,7 @@ import Alert from "../../ReusableComponents/Alert";
 
 export default function CheckIn() {
 
-    const { passengers, setPassengers, bags, setBags, currentUser } = useData()
+    const { passengers, setPassengers, setBags, flights, authToken, currentUser } = useData()
 
     const [ticketNumber, setTicketNumber] = useState("");
     const [terminal, setTerminal] = useState("");
@@ -71,13 +72,14 @@ export default function CheckIn() {
         return Math.floor(100000 + Math.random() * 900000);
     }
 
-    const CheckInPassenger = (e) => {
+    const CheckInPassenger = async (e) => {
         e.preventDefault();
 
-        let _ticketNumber = Number(ticketNumber)
+        const _ticketNumber = ticketNumber.trim()
 
-        const passengerExists = passengers.find(p => p.ticketNumber === _ticketNumber);
-        const passengerExistAndCheckedIn = passengers.find(p => p.ticketNumber === _ticketNumber && p.status !== "Not-checked-in");
+        const passengerExists = passengers.find(p => String(p.ticketNumber) === _ticketNumber);
+        const passengerExistAndCheckedIn = passengers.find(p => String(p.ticketNumber) === _ticketNumber && p.status !== "Not-checked-in");
+        const currentAirline = currentUser.airlineCode || currentUser.airline;
 
         console.log(passengerExists);
 
@@ -87,7 +89,7 @@ export default function CheckIn() {
             return;
         }
 
-        else if (passengerExists.flight.slice(0, 2) !== currentUser.airline) {
+        else if ((passengerExists.airlineCode || passengerExists.flight.slice(0, 2)) !== currentAirline) {
             setErrorMessage(`You cannot check in this passenger!`)
             setErrorMessageState(true)
             return;
@@ -97,57 +99,64 @@ export default function CheckIn() {
             setErrorMessage(`Passenger (Ticket Number: ${_ticketNumber}) has already been checked in!`)
             setErrorMessageState(true)
             return;
-        } else {
-            setErrorMessage(`Passenger (Ticket Number: ${_ticketNumber}) has been successfully checked in!`)
-            setErrorMessageState(true)
         }
-
-        const createdIds = [];
 
         const flightId = passengerExists.flight
 
         const bagsToCheck = Array.from({ length: Number(bagNumber) }, () => {
             const bagId = bagIdGen();
-            createdIds.push(bagId);
 
             return {
                 bagId,
                 ticketNumber: _ticketNumber,
                 flightId: flightId,
+                airlineCode: passengerExists.airlineCode || currentAirline,
                 location: `COUNTER-${terminal}${counterNumber}`
             };
         });
 
         console.log(bagsToCheck)
 
-        setBags(bags => [...bags, ...bagsToCheck])
+        try {
+            await checkInPassenger(authToken, _ticketNumber, bagsToCheck)
 
-        setPassengers(passenger => passenger.map(p => p.ticketNumber === _ticketNumber
-            ? { ...p, status: "Checked-in" } : p
-        ))
+            const [updatedPassengers, bagGroups] = await Promise.all([
+                fetchPassengers(authToken),
+                Promise.all(flights.map(flight => fetchBagsByFlight(authToken, flight.flightId)))
+            ])
 
-        setTicketNumber("")
-        setTerminal("")
-        setCounterNumber("")
-        setBagNumber(0)
+            setPassengers(updatedPassengers)
+            setBags(bagGroups.flat())
+
+            setErrorMessage(`Passenger (Ticket Number: ${_ticketNumber}) has been successfully checked in!`)
+            setErrorMessageState(true)
+
+            setTicketNumber("")
+            setTerminal("")
+            setCounterNumber("")
+            setBagNumber(0)
+        } catch (err) {
+            setErrorMessage(err.message || "Failed to check in passenger.")
+            setErrorMessageState(true)
+        }
 
     }
     return (
-        <div className="w-full h-full flex justify-center items-center">
+        <div className="w-full min-h-screen flex justify-center items-center px-4 py-32 overflow-y-auto">
 
-            <div className={`absolute top-36 right-8 h-24 w-96 transition-all ease-in-out ${errorMessageState ? 'duration-300 translate-x-0 opacity-100' : 'duration-300 translate-x-full opacity-0'}`}>
+            <div className={`fixed top-32 right-4 z-40 h-24 w-[min(24rem,calc(100vw-2rem))] transition-all ease-in-out ${errorMessageState ? 'duration-300 translate-x-0 opacity-100' : 'duration-300 translate-x-full opacity-0'}`}>
                 <Alert error={errorMessage} />
             </div>
 
 
             <form
                 onSubmit={CheckInPassenger}
-                className="p-16 relative w-4/12 min-h-2/12 bg-emerald-800 outline-2 outline-emerald-950 rounded-3xl flex flex-col justify-center items-center gap-8"
+                className="p-8 sm:p-12 relative w-full max-w-xl bg-emerald-800 outline-2 outline-emerald-950 rounded-3xl flex flex-col justify-center items-center gap-6 sm:gap-8"
             >
                 <button
                     type="submit"
-                    className={`cursor-pointer hover:scale-105 absolute bottom-0 -right-[120px] rounded-full bg-emerald-800 border-2 border-emerald-950 size-32 gap-y-4 text-white transition-all duration-500 flex flex-col justify-center items-center
-                            ${validForm ? '' : 'ease-in opacity-0'}`}
+                    className={`cursor-pointer hover:scale-105 absolute bottom-0 -right-[120px] mt-2 rounded-full bg-emerald-800 border-2 border-emerald-950 size-24 sm:size-28 gap-y-4 text-white transition-all duration-500 flex flex-col justify-center items-center
+                            ${validForm ? '' : 'ease-in opacity-0 pointer-events-none'}`}
                 >
                     <svg
                         className="fill-white"

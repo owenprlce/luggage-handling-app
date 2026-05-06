@@ -1,15 +1,18 @@
 import { useState, useEffect } from "react"
 
 import ComponentFooter from "../../ReusableComponents/ComponentFooter"
+import ComponentHeader from "../../ReusableComponents/ComponentHeader"
 import Alert from "../../ReusableComponents/Alert"
 import { useData } from "../../GlobalData/ApplicationData"
+import { addFlight } from "../../api/backend"   // <-- import the api utility
 
 import { airlineCodeRegex, flightNumberRegex, terminalRegex, gateNumberRegex, alphaRegex } from "../../RegexValidation/form-validation"
 
 export default function AddFlight() {
 
     // ***Backend Route (Add Flight) 
-    const { flights, setFlights } = useData()
+    
+    const { flights, setFlights, authToken } = useData()
 
     const [airlineCode, setAirlineCode] = useState("")
     const [flightNumber, setFlightNumber] = useState("")
@@ -30,6 +33,8 @@ export default function AddFlight() {
     // Temporary error message to display
     const [errorMessage, setErrorMessage] = useState("")
     const [errorMessageState, setErrorMessageState] = useState(false)
+
+    const [isLoading, setIsLoading] = useState(false)
 
     useEffect(() => {
 
@@ -100,71 +105,62 @@ export default function AddFlight() {
         }
     }
 
-    function addFlight(e) {
+    async function addNewFlight(e) {
         e.preventDefault()
-
-        const existingFlight = flights.some(f => f.flightId === `${airlineCode}${flightNumber}`)
-        const occupiedFlightBay = flights.some(f => f.gateInformation.terminal === terminal && f.gateInformation.gateNumber === gateNumber)
-
-        let _flightNumber = flightNumberValidation(flightNumber)
-
-        if (existingFlight) {
-            setErrorMessage(`Flight ${airlineCode}${_flightNumber} already exists!`)
-            setErrorMessageState(true)
-            return;
-        }
-
-        else if (occupiedFlightBay) {
-            setErrorMessage(`Flight bay ${terminal}${gateNumber} is occupied!`)
-            setErrorMessageState(true)
-            return;
-        } 
-        
-        else {
-            setErrorMessage(`Flight ${airlineCode}${_flightNumber} to ${destination} added!`)
-            setErrorMessageState(true)
-        }
-
-        const flightToAdd = {
-            flightId: `${airlineCode}${_flightNumber}`,
-            airlineCode: airlineCode,
-            flightNumber: _flightNumber,
-            airlineName: airlineName,
-            destination: destination,
-            gateInformation: {
+        if (isLoading) return
+        setIsLoading(true)
+    
+        const _flightNumber = flightNumberValidation(flightNumber)
+        const flightId = `${airlineCode}${_flightNumber}`
+    
+        try {
+            await addFlight(authToken, {
+                flightId,
+                destination,
                 terminal,
-                gateNumber
-            },
-            ticketNumbers: []
+                gateNumber,
+                airlineCode,
+            })
+    
+            // Backend confirmed success — update local state
+            setFlights(flights => [...flights, {
+                flightId,
+                airlineCode,
+                flightNumber: _flightNumber,
+                airlineName,
+                destination,
+                gateInformation: { terminal, gateNumber },
+                ticketNumbers: [],
+            }])
+    
+            setErrorMessage(`Flight ${flightId} to ${destination} added!`)
+            setErrorMessageState(true)
+    
+            setAirlineCode(""); setFlightNumber(""); setTerminal("")
+            setGateNumber("");  setAirlineName("");  setDestination("")
+    
+        } catch (err) {
+            // apiRequest throws an Error with the server's message baked in
+            setErrorMessage(err.message || "Failed to add flight.")
+            setErrorMessageState(true)
+        } finally {
+            setIsLoading(false)
         }
-
-        setFlights(flights => [...flights, flightToAdd])
-
-        console.log("Flight added successfully", flightToAdd);
-
-        setAirlineCode("");
-        setFlightNumber("");
-        setTerminal("");
-        setGateNumber("");
-        setAirlineName("");
-        setDestination("")
-
     }
 
     return (
-        <div className="w-full h-full bg-orange-50 flex justify-center items-center">
+        <div className="w-full min-h-screen bg-orange-50 flex justify-center items-center px-4 py-32 overflow-y-auto">
 
-            <div className={`absolute top-36 right-8 h-24 w-96 transition-all ease-in-out ${errorMessageState ? 'duration-300 translate-x-0 opacity-100' : 'duration-300 translate-x-full opacity-0'}`}>
+            <div className={`fixed top-32 right-4 z-40 h-24 w-[min(24rem,calc(100vw-2rem))] transition-all ease-in-out ${errorMessageState ? 'duration-300 translate-x-0 opacity-100' : 'duration-300 translate-x-full opacity-0'}`}>
                 <Alert error={errorMessage} />
             </div>
 
             <ComponentFooter title={'Add Flight Form'} />
 
-            <form onSubmit={addFlight} className="p-16 relative w-4/12 min-h-2/12 bg-emerald-800 outline-2 outline-emerald-950 rounded-3xl flex flex-col justify-center items-center gap-8">
+            <form onSubmit={addNewFlight} className="p-8 sm:p-12 relative w-full max-w-xl bg-emerald-800 outline-2 outline-emerald-950 rounded-3xl flex flex-col justify-center items-center gap-6 sm:gap-8">
 
-
-                <button type="submit" className={`cursor-pointer hover:scale-105 absolute bottom-0 -right-[120px] rounded-full bg-emerald-800 border-2 border-emerald-950 size-32 gap-y-4 text-white transition-all duration-500 flex flex-col justify-center items-center
-                                    ${validForm ? '' : 'ease-in opacity-0'}`}>
+                <button type="submit" className={`cursor-pointer hover:scale-105 absolute bottom-0 -right-[120px] mt-2 rounded-full bg-emerald-800 border-2 border-emerald-950 size-24 sm:size-28 gap-y-4 text-white transition-all duration-500 flex flex-col justify-center items-center
+                                    ${validForm ? '' : 'ease-in opacity-0 pointer-events-none'}`}>
                     <svg className="fill-white" xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="#000000" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm48-88a8,8,0,0,1-8,8H136v32a8,8,0,0,1-16,0V136H88a8,8,0,0,1,0-16h32V88a8,8,0,0,1,16,0v32h32A8,8,0,0,1,176,128Z"></path></svg>
                 </button>
 

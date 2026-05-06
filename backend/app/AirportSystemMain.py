@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from typing import Optional
 import bcrypt
+import mysql.connector
 
 from app.db_interfaces.DBInterfaceLogginCredentials     import DBInterfaceLoginCredentials
 from app.db_interfaces.DBInterfaceFlights               import DBInterfaceFlights
@@ -67,12 +68,22 @@ class AirportSystemMain:
     # -------------------------------------------------------------------------
 
     def add_flight(self, flight: Flight) -> None:
-        self.db_flight.store_flight(flight)
+        try:
+            self.db_flight.store_flight(flight)
+        
+        except mysql.connector.errors.IntegrityError:
+            raise ValueError(f"Flight {flight.flight_id} already exists!")
+
 
     def remove_flight(self, flight_id: str) -> None:
         flight = self.db_flight.retrieve_flight(flight_id)
         if flight is None:
             raise ValueError(f"Flight {flight_id} not found")
+        
+        self.db_bag.remove_bags_by_flight(flight_id)
+        self.db_passenger.remove_passengers_by_flight(flight_id)
+
+
         self.db_flight.remove_flight(flight_id)
 
     def get_flight(self, flight_id: str) -> Flight:
